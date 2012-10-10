@@ -34,7 +34,7 @@ void Init_SPIMAX186()
     // deSelect the device by seting chip select low
     cs = 1;
     ADCstatus=0;
-    printf("Init SPI max186...OK\n");
+    printf("Init SPI max186...OK2\n");
 }
 
 // Start A2D conversion, Fs sampling frequency
@@ -72,7 +72,7 @@ void stopA2D()
 // stop timerA2D when the maxSamples is achieved
 void Intr_timerA2D(void)
 {
-int i;
+unsigned int i;
 led1=!led1;
 if (ADCstatus==1)
     if (nSamples>=maxSamples)

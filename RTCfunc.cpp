@@ -9,6 +9,7 @@ Ticker flipper2;
 DigitalOut mheart(LED3);
 
 void dispTime() {
+
   
   //test sscanf
   /*
@@ -19,6 +20,7 @@ void dispTime() {
   printf ("\n%s's -> %d-th mBed\n",str,i);
   */
   
+
     time_t seconds = time(NULL);
 
    // printf("Time as seconds since January 1, 1970 = %d\n", seconds);

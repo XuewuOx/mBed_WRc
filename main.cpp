@@ -9,6 +9,7 @@
 
 #include "main.h"
 #include "wtd.h"
+
  
 // Setup the watchdog timer
 Watchdog wdt;
@@ -23,6 +24,11 @@ DigitalOut led4(LED4);
 Ticker flipper1;
 // DigitalOut mheart(LED3); // LED3 has been used for heartbeat in RTCfunc.h/cpp
 
+
+extern int endofcmd; // -1 for normal char, 0 for 0x0D, 1 for 0x0A
+                 // endofcmd =1 (TRUE) only when received 0D 0A ("\r\n")
+extern MODSERIAL sinegen;
+                 
 int main() {
 unsigned int Fs=500;
     initCOMpc();
@@ -47,11 +53,14 @@ unsigned int Fs=500;
     // sinegen.printf("Hello world!\r\n\r\n");
     // mheart = 1;
     
+
     flipper1.attach(&heartbeat, 1.0); // the address of the function to be attached (flip) and the interval (2 seconds)
     wait(0.1);
 
-    pc.printf("Echoes back to the screen anything you type\r\n");
+    // pc.printf("Echoes back to the screen anything you type\r\n");
     pc.printf("Press 'u' to turn LED2 brightness up, 'd' to turn it down\r\n");
+
+    pc.printf("irs");
     dispMotorCmdHelp();
     pc.printf("\r\n");
     dispMotorStatus();

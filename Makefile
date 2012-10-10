@@ -4,8 +4,10 @@
 GCC_BIN = 
 MBEDDRIVE=H:
 PROJECT = loadmon
-OBJECTS = ./MODSERIAL/ChangeLog.o ./RTCfunc.o ./main.o ./MODSERIAL/FLUSH.o ./MODSERIAL/example_dma.o ./MODSERIAL/example2.o ./MODSERIAL/MODSERIAL.o ./MODSERIAL/example3a.o ./MODSERIAL/GETC.o ./MODSERIAL/ISR_TX.o ./MODSERIAL/example1.o ./MODSERIAL/INIT.o ./MODSERIAL/MODSERIAL_IRQ_INFO.o ./MODSERIAL/PUTC.o ./MODSERIAL/RESIZE.o ./MODSERIAL/ISR_RX.o ./MODSERIAL/example3b.o 
-SYS_OBJECTS = ./mbed/LPC1768/GCC_CS/sys.o ./mbed/LPC1768/GCC_CS/cmsis_nvic.o ./mbed/LPC1768/GCC_CS/system_LPC17xx.o ./mbed/LPC1768/GCC_CS/core_cm3.o ./mbed/LPC1768/GCC_CS/startup_LPC17xx.o 
+OBJECTS = ./MODSERIAL/ChangeLog.o ./COMfunc.o ./RTCfunc.o ./main.o ./MODSERIAL/FLUSH.o ./MODSERIAL/example_dma.o ./MODSERIAL/example2.o ./MODSERIAL/MODSERIAL.o ./MODSERIAL/example3a.o ./MODSERIAL/GETC.o ./MODSERIAL/ISR_TX.o ./MODSERIAL/example1.o ./MODSERIAL/INIT.o ./MODSERIAL/MODSERIAL_IRQ_INFO.o ./MODSERIAL/PUTC.o ./MODSERIAL/RESIZE.o ./MODSERIAL/ISR_RX.o ./MODSERIAL/example3b.o 
+OBJECTS_DOS = .\MODSERIAL\ChangeLog.o .\COMfunc.o .\RTCfunc.o .\main.o .\MODSERIAL\FLUSH.o .\MODSERIAL\example_dma.o .\MODSERIAL\example2.o .\MODSERIAL\MODSERIAL.o .\MODSERIAL\example3a.o .\MODSERIAL\GETC.o .\MODSERIAL\ISR_TX.o .\MODSERIAL\INIT.o .\MODSERIAL\MODSERIAL_IRQ_INFO.o .\MODSERIAL\PUTC.o .\MODSERIAL\RESIZE.o 
+SYS_OBJECTS = ./mbed/LPC1768/GCC_CS/sys.o ./mbed/LPC1768/GCC_CS/cmsis_nvic.o ./mbed/LPC1768/GCC_CS/system_LPC17xx.o ./mbed/LPC1768/GCC_CS/core_cm3.o ./mbed/LPC1768/GCC_CS/startup_LPC17xx.o
+ 
 INCLUDE_PATHS = -I. -I./mbed -I./mbed/LPC1768 -I./mbed/LPC1768/GCC_CS -I./MODSERIAL 
 LIBRARY_PATHS = -L./mbed/LPC1768/GCC_CS 
 LIBRARIES = -lmbed -lcapi 
@@ -28,19 +30,29 @@ LD_SYS_LIBS = -lstdc++ -lsupc++ -lm -lc -lgcc
 
 OBJCOPY = $(GCC_BIN)arm-none-eabi-objcopy
 
+        
+# cs-make all
 all: $(PROJECT).bin
+	 del main.o
 
+#cs-make clean
 clean:
-	rm -f $(PROJECT).bin $(PROJECT).elf $(OBJECTS)
+	del $(PROJECT).elf 
+	del $(OBJECTS_DOS)
+# rm -f $(PROJECT).bin
 
 .s.o:
 	$(AS)  $(CC_FLAGS) $(CC_SYMBOLS) -o $@ $<
 
 .c.o:
 	$(CC)  $(CC_FLAGS) $(CC_SYMBOLS) $(ONLY_C_FLAGS)   $(INCLUDE_PATHS) -o $@ $<
+	$(CC)  $(CC_FLAGS) $(CC_SYMBOLS) $(ONLY_C_FLAGS)   $(INCLUDE_PATHS) -MM -> $@ ./.depend
 
+	
 .cpp.o:
 	$(CPP) $(CC_FLAGS) $(CC_SYMBOLS) $(ONLY_CPP_FLAGS) $(INCLUDE_PATHS) -o $@ $<
+
+
 
 
 $(PROJECT).elf: $(OBJECTS) $(SYS_OBJECTS)

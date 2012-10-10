@@ -49,6 +49,7 @@ Ticker tickerMotor[2];
 void clkMotorLED();
 void clkMotorAPD();
 void dispMotorStatus();
+void moveMotor2Dest(int motorID, int dest);
 
 void dispMotorCmdHelp() {
     pc.printf("To set motor: setm motorID nOrigin nNow speed fullStep\r\n");
