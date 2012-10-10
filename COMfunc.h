@@ -15,7 +15,7 @@
 extern DigitalOut led1;
 extern PwmOut led2;
 // extern DigitalOut led4debug;
-extern DigitalOut ledlight;
+extern DigitalOut led4;
 
 extern float brightness;
 extern void moveMotornSteps(int, int);
@@ -206,7 +206,7 @@ void cmdProcess()
     nValidArgs=sscanf(msgBufIn, "ir%s\n", tx13_buffer);
     sinegen.puts(tx13_buffer);
     pc.puts(tx13_buffer);
-    ledlight=!ledlight;
+    led4=!led4;
     return;
    }
    
@@ -235,7 +235,7 @@ void cmdProcess()
     else if (chID>='0' && chID<'8')
          readA2D(chID-0x30);
          
-    ledlight=!ledlight;
+    led4=!led4;
     return;
    }
   // not a pre-defined command, ignored.
@@ -246,7 +246,7 @@ void cmdProcess()
 // Interupt Routine to read in data from serial port
 void Rx14_interrupt(MODSERIAL_IRQ_INFO *q) {
     char rxch;
-    ledlight=!ledlight;
+    led4=!led4;
 // Loop just in case more than one character is in UART's receive FIFO buffer
 // Stop if buffer full
     while (sinegen.readable()) {
@@ -255,7 +255,7 @@ void Rx14_interrupt(MODSERIAL_IRQ_INFO *q) {
         pc.putc(rxch);
         
         }
-    ledlight=0;
+    led4=0;
     return;
 }
 

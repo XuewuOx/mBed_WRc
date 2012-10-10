@@ -13,7 +13,7 @@
 #include "main.h"
 
 extern MODSERIAL pc;
-extern DigitalOut ledlight;
+extern DigitalOut led4;
 
 
 DigitalOut clkLED(p21);
@@ -78,7 +78,7 @@ void setMotor(int motorID, int nO, int nN, float spd, int fullstep) {
     pDIR[1]=&dirAPD;
     pSTP[1]=&fulAPD;
 
-    ledlight=0;
+    led4=0;
     k=motorID-1;
     if ((motorID==1) ||(motorID==2))
      {  
@@ -132,7 +132,7 @@ void moveMotor2Dest(int motorID, int dest) {
         else
             *pDIR[k]=0;
         nDest[motorID]=dest;
-        ledlight=0;
+        led4=0;
         *pCLK[k]=0;
         *pENB[k]=1;
         // tickerLED.attach(&clkMotorLED,0.5/motorSpd[motorID]);
@@ -154,14 +154,14 @@ void clkMotorLED() {
         // tickerLED.detach();
         tickerMotor[0].detach();
         *pENB[0]=0;
-        ledlight=0;
+        led4=0;
         // pc.printf("motorLED arrives at %d \r\n", nNow[MOTORIDLED]);
         dispMotorStatus();
         return;
     }
 
     *pCLK[0]=!(*pCLK[0]);
-     ledlight=!ledlight;
+     led4=!led4;
     if (*pCLK[0]==0) { // drop edge
         if (*pDIR[0]==1)
             nNow[MOTORIDLED]--;
@@ -181,14 +181,14 @@ k=1;
         // tickerLED.detach();
         tickerMotor[1].detach();
         *pENB[k]=0;
-        ledlight=0;
+        led4=0;
         // pc.printf("motorLED arrives at %d \r\n", nNow[MOTORIDLED]);
         dispMotorStatus();
         return;
     }
 
     *pCLK[1]=!(*pCLK[1]);
-     ledlight=!ledlight;
+     led4=!led4;
     if (*pCLK[1]==0) { // drop edge
         if (*pDIR[1]==1)
             nNow[MOTORIDAPD]--;

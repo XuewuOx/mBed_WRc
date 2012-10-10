@@ -18,7 +18,7 @@ float brightness = 0.0;
 
 DigitalOut led1(LED1);
 // DigitalOut led4debug(LED4);
-DigitalOut ledlight(LED4);
+DigitalOut led4(LED4);
 
 Ticker flipper1;
 // DigitalOut mheart(LED3); // LED3 has been used for heartbeat in RTCfunc.h/cpp
