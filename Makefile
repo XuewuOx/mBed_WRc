@@ -5,8 +5,9 @@ GCC_BIN =
 MBEDDRIVE=H:
 PROJECT = loadmon
 OBJECTS = ./MODSERIAL/ChangeLog.o ./COMfunc.o ./RTCfunc.o ./main.o ./MODSERIAL/FLUSH.o ./MODSERIAL/example_dma.o ./MODSERIAL/example2.o ./MODSERIAL/MODSERIAL.o ./MODSERIAL/example3a.o ./MODSERIAL/GETC.o ./MODSERIAL/ISR_TX.o ./MODSERIAL/example1.o ./MODSERIAL/INIT.o ./MODSERIAL/MODSERIAL_IRQ_INFO.o ./MODSERIAL/PUTC.o ./MODSERIAL/RESIZE.o ./MODSERIAL/ISR_RX.o ./MODSERIAL/example3b.o 
-OBJECTS_DOS = .\MODSERIAL\ChangeLog.o .\COMfunc.o .\RTCfunc.o .\main.o .\MODSERIAL\FLUSH.o .\MODSERIAL\example_dma.o .\MODSERIAL\example2.o .\MODSERIAL\MODSERIAL.o .\MODSERIAL\example3a.o .\MODSERIAL\GETC.o .\MODSERIAL\ISR_TX.o .\MODSERIAL\INIT.o .\MODSERIAL\MODSERIAL_IRQ_INFO.o .\MODSERIAL\PUTC.o .\MODSERIAL\RESIZE.o 
-SYS_OBJECTS = ./mbed/LPC1768/GCC_CS/sys.o ./mbed/LPC1768/GCC_CS/cmsis_nvic.o ./mbed/LPC1768/GCC_CS/system_LPC17xx.o ./mbed/LPC1768/GCC_CS/core_cm3.o ./mbed/LPC1768/GCC_CS/startup_LPC17xx.o
+OBJECTS_DOS = .\COMfunc.o .\RTCfunc.o .\main.o 
+OBJECTS_DOS_ALL = .\COMfunc.o .\RTCfunc.o .\main.o .\MODSERIAL\FLUSH.o .\MODSERIAL\example_dma.o .\MODSERIAL\example2.o .\MODSERIAL\MODSERIAL.o .\MODSERIAL\example3a.o .\MODSERIAL\GETC.o .\MODSERIAL\ISR_TX.o .\MODSERIAL\INIT.o .\MODSERIAL\MODSERIAL_IRQ_INFO.o .\MODSERIAL\PUTC.o .\MODSERIAL\RESIZE.o
+ SYS_OBJECTS = ./mbed/LPC1768/GCC_CS/sys.o ./mbed/LPC1768/GCC_CS/cmsis_nvic.o ./mbed/LPC1768/GCC_CS/system_LPC17xx.o ./mbed/LPC1768/GCC_CS/core_cm3.o ./mbed/LPC1768/GCC_CS/startup_LPC17xx.o
  
 INCLUDE_PATHS = -I. -I./mbed -I./mbed/LPC1768 -I./mbed/LPC1768/GCC_CS -I./MODSERIAL 
 LIBRARY_PATHS = -L./mbed/LPC1768/GCC_CS 
@@ -33,13 +34,13 @@ OBJCOPY = $(GCC_BIN)arm-none-eabi-objcopy
         
 # cs-make all
 all: $(PROJECT).bin
-	 del main.o
+	del main.o
 
 #cs-make clean
 clean:
 	del $(PROJECT).elf 
 	del $(OBJECTS_DOS)
-# rm -f $(PROJECT).bin
+	del $(MBEDDRIVE)\$(PROJECT).bin
 
 .s.o:
 	$(AS)  $(CC_FLAGS) $(CC_SYMBOLS) -o $@ $<

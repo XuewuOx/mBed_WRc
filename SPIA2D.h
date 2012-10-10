@@ -121,7 +121,7 @@ void Intr_SSTRB(void)
      a2dtemp=hi<<8;
      a2dtemp=a2dtemp+lo;
      a2dtemp=a2dtemp>>3;
-     a2dvalue[nSamples][adChn]=a2dtemp;
+     a2dvalue[nSamples][(unsigned int)adChn]=a2dtemp;
      if (adChn>=maxChnID)
         { 
           adChn=0;
