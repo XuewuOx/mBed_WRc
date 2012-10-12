@@ -1,9 +1,12 @@
+
 #include "mbed.h"
 #include "COMfunc.h"
 #include "main.h"
 #include "MODSERIAL.h"
 #include "SPIA2D.h"
 #include "RTCfunc.h"
+
+#include "stepmotor_ctr.h"
 
 /* ----------------------------------------------
 *   External variable defination for COM communication
@@ -13,13 +16,15 @@ extern PwmOut led2;
 extern DigitalOut led4;
 
 extern float brightness;
-extern void moveMotornSteps(int, int);
-extern void moveMotor2Dest(int, int);
-extern void setMotor(int, int, int, float, int);
-extern void dispMotorStatus(void);
-extern void stopA2D();
-extern void readA2D(char chn);
-extern void startA2D(unsigned int Fs, unsigned int nSamplesRequired);
+
+// extern void moveMotornSteps(int, int);
+// extern void moveMotor2Dest(int, int);
+// extern void setMotor(int, int, int, float, int);
+// extern void dispMotorStatus(void);
+
+// extern void stopA2D();
+// extern void readA2D(char chn);
+// extern void startA2D(unsigned int Fs, unsigned int nSamplesRequired);
 
 /* ----------------------------------------------
  *   Variable defination for COM communication
@@ -28,7 +33,6 @@ extern void startA2D(unsigned int Fs, unsigned int nSamplesRequired);
 
 // Serial pc(USBTX,USBRX); // tx, rx
 MODSERIAL pc(USBTX,USBRX);
-
 
 char uartBufIn[UART_BUFFER_SIZE];
 char uartBufOut[UART_BUFFER_SIZE];
@@ -168,6 +172,8 @@ void cmdProcess()
   char chID; // ID of select A2D channel for AD conversion
   int nOri, nNow, fullstep;
   float spd;
+
+  int aa, bb;
   // printf("received cmd %s",msgBufIn);
   moveType='s';
   k=0;
@@ -266,6 +272,22 @@ void cmdProcess()
          
     led4=!led4;
     return;
+   }
+
+
+   if (strcmp2(msgBufIn,"swn",3)==1)
+   { // swing LED source and collect UV/IR data
+	  nValidArgs=sscanf(msgBufIn, "swn %d %d %d\n", &aa, &bb, &nSam);
+	  if (nValidArgs==3)
+	  {
+		  swingLED(aa, bb, nSam);
+	   }
+	  else
+	  {
+		  DEBUGF("uncompleted command, ignored. \n");
+	  }
+	  DEBUGF("cmdPrcess() returns\n");
+	  return;
    }
   // not a pre-defined command, ignored.
   DEBUGF("Un-recognised command, ignored. \n");

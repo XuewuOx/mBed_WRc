@@ -4,13 +4,14 @@
 #include "mbed.h"
 #include "RTCfunc.h"
 #include "COMfunc.h"
-#include "stepmotor_ctrl.h"
+#include "stepmotor_ctr.h"
 #include "SPIA2D.h"
 
 #include "main.h"
 #include "wtd.h"
 
- 
+ #include "MODSERIAL.h"
+
 // Setup the watchdog timer
 Watchdog wdt;
 
@@ -27,10 +28,24 @@ Ticker flipper1;
 
 extern int endofcmd; // -1 for normal char, 0 for 0x0D, 1 for 0x0A
                  // endofcmd =1 (TRUE) only when received 0D 0A ("\r\n")
+extern MODSERIAL pc;
 
-                 
-int main() {
-	unsigned int Fs=500;
+extern unsigned int Fs;
+
+
+extern char ADCstatus; // 0 for idle,
+                // 1 for coversion in progress,
+                // 2 for maxSamples has been collected
+                // 3  for continuous sampling
+
+extern int nNow[NUMMOTOR];
+extern float motorSpd[NUMMOTOR]; // steps per second
+
+void dispCmdInfo();
+
+int main()
+{
+	Fs=500;
 
     initCOMpc();
 //    printf("INICOM...OK\n");
@@ -53,35 +68,18 @@ int main() {
     // pc.printf("Hello world!\r\n\r\n");
     // mheart = 1;
     
-
+   dispCmdInfo();
     flipper1.attach(&heartbeat, 1.0); // the address of the function to be attached (flip) and the interval (2 seconds)
     wait(0.1);
 
-    // pc.printf("Echoes back to the screen anything you type\r\n");
-    pc.printf("Command List\n");
-    pc.printf("  (0) resetmbed to reset the mBed by WTD\n");
-    pc.printf("  (1) 'u' to turn LED2 brightness up, 'd' to turn it down\r\n");
-
-    pc.printf("  (2) irs##<CR>  to start IR laser source\n");
-    pc.printf("      irt<CR>  to stop IR source and save its frq to EEROM\n");
-    pc.printf("      irf[+|-|#]###<CR>  to set frequency of IR LED current\n");
-
-    pc.printf("  (3) uvs##<CR>  to start UV LED source\n");
-    pc.printf("      uvt<CR>  to stop UV source and save its frq to EEROM\n");
-    pc.printf("      uvf[+|-|#]###<CR>  to set frequency of UV LED current\n");
-
-    pc.printf("  (4) set and move motors\n");
-    dispMotorCmdHelp();
-    pc.printf("\r\n");
-    dispMotorStatus();
+      dispMotorStatus();
     wait(0.2);
     
     setMotor(MOTORIDLED, 0, 0, 1, FULLSTEP); // for LED
     setMotor(2, 0, 0, 1, FULLSTEP); // for LED
-    moveMotor2Dest(MOTORIDLED, 5);
+    moveMotor2Dest(MOTORIDLED, 2);
     
-  
-    // int account=0;
+      // int account=0;
     while (1) {
 
         wdt.feed();
@@ -92,6 +90,12 @@ int main() {
          endofcmd=-1;
         }
         
+        if (ADCstatus==2)
+        { // required number of samples have been collected
+           ADCstatus=0; // set 3 for continusou sampling,
+                        // set 0 for one-shot sampling, see heartbeat()in RTCfunc.cpp
+        }
+
         { // debug code for WTD
           //  account++;
           //  if (account>=1000)
@@ -99,6 +103,93 @@ int main() {
         }
         
        }// end of while(1)
+} // end of main
+
+void swingLED(int posA, int posB, int nSam)
+{ int i,nSteps;
+float kk;
+	printf("swing LED from A=%d to B=%d and collect %d UV/IR samples per step\n",posA, posB, nSam);
+    moveMotor2Dest(MOTORIDLED, posA);
+    // return;
+    if(nNow[MOTORIDLED]<posA)
+    	nSteps=posA-nNow[MOTORIDLED];
+    else
+    	nSteps=nNow[MOTORIDLED]-posA;
+
+    kk=(float) nSteps/motorSpd[MOTORIDLED]+2;  // steps per second
+    if (kk>10.0)
+    	wdt.kick(kk);
+    // DEBUGF("wdt=%f s",kk);
+    while(nNow[MOTORIDLED]!=posA)
+    { //  printf(" %d ", nNow[MOTORIDLED]);
+         wait(0.001);
     }
+    if (kk<10.0) wdt.kick(10.0);
+    pc.printf("\n, So far, OK!\n");
+    return;
+
+    // dispMotorStatus();
+    if (posB<posA)
+    {   ADCstatus=0;
+    	for (i=posA;i>posB;i--)
+    	 {
+    	    startA2D(Fs,nSam);
+    	    do{  	} while(ADCstatus!=2);
+    	    moveMotornSteps(MOTORIDLED,-1);
+    	    while(nNow[MOTORIDLED]!=i-1);
+    	    ADCstatus=0;  //set 0 for one-shot sampling, see heartbeat()in RTCfunc.cpp
+    	    wdt.feed();
+    	 }
+    }
+    else
+    {  ADCstatus=0;
+    	  for (i=posA;i<posB;i++)
+    	    	 {  startA2D(Fs,nSam);
+    	    	    do{  	} while(ADCstatus!=2);
+    	    	    moveMotornSteps(MOTORIDLED,1);
+    	    	    while(nNow[MOTORIDLED]!=i+1);
+    	    	    ADCstatus=0;  //set 0 for one-shot sampling, see heartbeat()in RTCfunc.cpp
+    	    	    wdt.feed();
+    	    	 }
+
+    }
+
+}
+
+
+void dispCmdInfo()
+{
+	 // pc.printf("Echoes back to the screen anything you type\r\n");
+	    pc.printf("Command List\n");
+	    pc.printf("  (0) resetmbed to reset the mBed by WTD\n");
+	    pc.printf("  (1) 'u' to turn LED2 brightness up, 'd' to turn it down\r\n");
+
+	    pc.printf("  (2) irs##<CR>  to start IR laser source\n");
+	    pc.printf("      irt<CR>  to stop IR source and save its frq to EEROM\n");
+	    pc.printf("      irf[+|-|#]###<CR>  to set frequency of IR LED current\n");
+
+	    pc.printf("  (3) uvs##<CR>  to start UV LED source\n");
+	    pc.printf("      uvt<CR>  to stop UV source and save its frq to EEROM\n");
+	    pc.printf("      uvf[+|-|#]###<CR>  to set frequency of UV LED current\n");
+
+	    pc.printf("  (4) a2d type Fs nSamples<CR>\n");
+	    pc.printf("          type = s  start a2d conversion and collect nSamples at Fs Hz\n");
+	    pc.printf("          type = c  cancel ongoing a2d conversion\n");
+	    pc.printf("          type = #  take one sample from #-th channel, here # is a number in [0,7]\n");
+
+	    pc.printf("  (5)set and move motors\n");
+	    dispMotorCmdHelp();
+
+
+	    pc.printf("  (6) swn A B N<CR> swing source and collect UV/IR readings\n");
+	    pc.printf("       move LED motor from A to B at preset motor parameters (see setm command)\n");
+	    pc.printf("            and start collecting N UV/IR samples at each step (may not at the sampling rate Fs)\n");
+	    pc.printf("            UV/IR data are sent back when motor arrives at position B\n");
+
+
+	    pc.printf("\r\n");
+
+
+}
 
 #endif

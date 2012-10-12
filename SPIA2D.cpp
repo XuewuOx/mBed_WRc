@@ -30,9 +30,12 @@ unsigned int maxSamples; // total number of samples per channel to be collected
                          // 0 for continuous unlimited sampling
 unsigned int nSamples; // how many samples have been collected
 
+unsigned int Fs; // sampling rate
+
 char ADCstatus; // 0 for idle,
                 // 1 for coversion in progress,
                 // 2 for maxSamples has been collected
+                // 3  for continuous sampling
 
 Ticker timerA2D;
 
@@ -53,16 +56,17 @@ void Init_SPIMAX186()
 
 // Start A2D conversion, Fs sampling frequency
 //               nSamples number of samples required
-void startA2D(unsigned int Fs, unsigned int nSamplesRequired)
+void startA2D(unsigned int xFs, unsigned int nSamplesRequired)
 {
 // DEBUGF("tartA2D... enter...");
-if (ADCstatus==0)
+if (ADCstatus==0||ADCstatus==2)
    {
    // DEBUGF("...ADCstatus==0");
      ExIntr_sstrb.rise(&Intr_SSTRB);
      adChn=0;
     nSamples=0;
     maxSamples=nSamplesRequired;
+    Fs=xFs;
     ADCstatus=1; // dac conversion is in progress
     // timerA2D.attach(&Intr_timerA2D,0.002);
     timerA2D.attach(&Intr_timerA2D,(float)1/Fs);
@@ -90,7 +94,8 @@ unsigned int i;
 led1=!led1;
 if (ADCstatus==1)
     if (nSamples>=maxSamples)
-         {   timerA2D.detach();   //    stopA2D();
+         {   // required number of data has been collected, send up to host and stop a2d
+    	      timerA2D.detach();   //    stopA2D();
               ADCstatus=2; // maxSamples of samples have been collected
               // DEBUGF("%d samples done.\n[", nSamples);
               for (i=0;i<maxSamples;i++)
@@ -99,11 +104,13 @@ if (ADCstatus==1)
                     if (i%8==7)printf("\n");
                }
                // printf("]\n");
-              ADCstatus=3; // set 3 for continusou sampling,
+              // Now wait for main to process the ADCstatus
+               // ADCstatus=0; // set 3 for continusou sampling,
                           // set 0 for one-shot sampling, see heartbeat()in RTCfunc.cpp
           }
     else
-        {   cs=1;
+        {   // have not collected enough data, start next conversion
+    	    cs=1;
             adChn=0;
             nSamples=nSamples+1;
             cs=0;

@@ -1,21 +1,29 @@
-#ifndef STEMOTOR_CTRL_H
-#define STEMOTOR_CTRL_H
+/*
+ * stepmotor_ctr.cpp
+ *
+ *  Created on: 12 Oct 2012
+ *      Author: Xuewu Daniel Dai 
+ *       Email: xuewu.dai@eng.ox.ac.uk
+ *         URL: http://users.ox.ac.uk/~engs1058/
+ *
+ */
 
-#define NUMMOTOR 3
-
-#define MOTORIDLED 1
-#define MOTORIDAPD 2
-
-#define FULLSTEP 1
-#define HALFSTEP 0
+#include "stepmotor_ctr.h"
 
 #include "MODSERIAL.h"
 #include "main.h"
 
+
+/* -------------
+* external variable declaration
+*/
 extern MODSERIAL pc;
 extern DigitalOut led4;
 
 
+/* -------------
+* variable definition
+*/
 DigitalOut clkLED(p21);
 DigitalOut enbLED(p23);
 DigitalOut dirLED(p25); // 0 clockwise, 1 anti-clockwise
@@ -43,13 +51,11 @@ int nNow[NUMMOTOR];
 Ticker tickerLED; // tickerLED.timeout= 0.5 *(1/speedLED)
 Ticker tickerMotor[2];
 
+
+
 /* -------------
-* Function declaration
+* Function definition
 */
-void clkMotorLED();
-void clkMotorAPD();
-void dispMotorStatus();
-void moveMotor2Dest(int motorID, int dest);
 
 void dispMotorCmdHelp() {
     pc.printf("      setm motorID nOrigin nNow speed fullStep   :set motor's parameters, motorID=1 for LEDmotor, =2 for APDmotor\n");
@@ -68,7 +74,7 @@ void dispMotorStatus() {
 
 void setMotor(int motorID, int nO, int nN, float spd, int fullstep) {
     int k;
-    
+
     pCLK[0]=&clkLED;
     pENB[0]=&enbLED;
     pDIR[0]=&dirLED;
@@ -82,7 +88,7 @@ void setMotor(int motorID, int nO, int nN, float spd, int fullstep) {
     led4=0;
     k=motorID-1;
     if ((motorID==1) ||(motorID==2))
-     {  
+     {
         nOrigin[motorID]=nO;
         nNow[motorID]=nN;
         motorSpd[motorID]=spd;
@@ -96,7 +102,7 @@ void setMotor(int motorID, int nO, int nN, float spd, int fullstep) {
         *pDIR[k]=0;
         *pSTP[k]=fullStep[motorID];
         return;
-    } 
+    }
     else {
         printf("Wrong motorID while calling setMotor()\n");
     }
@@ -114,11 +120,11 @@ void moveMotornSteps(int motorID, int nSteps) {
 void moveMotor2Dest(int motorID, int dest) {
     int k;
     DEBUGF("motorID=%d, dest=%d\n",motorID, dest);
-    
+
     k=motorID-1;
-    if ((k==0)||(k==1)) 
+    if ((k==0)||(k==1))
     { // LED motor
-    
+
         if (*pENB[k]==1) { // motorLEd is moving, have to wait until it stops
             printf("motor[%d] is moving. move cmd is ignored\n", k+1);
             return;
@@ -141,10 +147,11 @@ void moveMotor2Dest(int motorID, int dest) {
            tickerMotor[k].attach(&clkMotorLED,0.5/motorSpd[motorID]);
         else
            tickerMotor[k].attach(&clkMotorAPD,0.5/motorSpd[motorID]);
-           
+
     } else {
         printf("%d  is an unrecognised MotorID. \n", motorID);
     }
+    // DEBUGF("moveMotor2Dest() return\n");
 
 }
 
@@ -198,7 +205,3 @@ k=1;
     }
 
 }
-
-#endif
-
-
