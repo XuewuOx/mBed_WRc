@@ -27,11 +27,13 @@ Ticker flipper1;
 
 extern int endofcmd; // -1 for normal char, 0 for 0x0D, 1 for 0x0A
                  // endofcmd =1 (TRUE) only when received 0D 0A ("\r\n")
-extern MODSERIAL sinegen;
+// extern MODSERIAL sinegen;
                  
 int main() {
-unsigned int Fs=500;
+	unsigned int Fs=500;
+
     initCOMpc();
+//    printf("INICOM...OK\n");
 // On reset, indicate a watchdog reset or a pushbutton reset on LED 4 or 3
     if ((LPC_WDT->WDMOD >> 2) & 1)
         { led2 = 0.1; DEBUGF("\n\n!!--- WTD reset (LED2=0.1) ---!!\n");}
@@ -58,9 +60,19 @@ unsigned int Fs=500;
     wait(0.1);
 
     // pc.printf("Echoes back to the screen anything you type\r\n");
-    pc.printf("Press 'u' to turn LED2 brightness up, 'd' to turn it down\r\n");
+    pc.printf("Command List\n");
+    pc.printf("  (0) resetmbed to reset the mBed by WTD\n");
+    pc.printf("  (1) 'u' to turn LED2 brightness up, 'd' to turn it down\r\n");
 
-    pc.printf("irs");
+    pc.printf("  (2) irs##<CR>  to start IR laser source\n");
+    pc.printf("      irt<CR>  to stop IR source and save its frq to EEROM\n");
+    pc.printf("      irf[+|-|#]###<CR>  to set frequency of IR LED current\n");
+
+    pc.printf("  (3) uvs##<CR>  to start UV LED source\n");
+    pc.printf("      uvt<CR>  to stop UV source and save its frq to EEROM\n");
+    pc.printf("      uvf[+|-|#]###<CR>  to set frequency of UV LED current\n");
+
+    pc.printf("  (4) set and move motors\n");
     dispMotorCmdHelp();
     pc.printf("\r\n");
     dispMotorStatus();

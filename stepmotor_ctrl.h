@@ -52,17 +52,17 @@ void dispMotorStatus();
 void moveMotor2Dest(int motorID, int dest);
 
 void dispMotorCmdHelp() {
-    pc.printf("To set motor: setm motorID nOrigin nNow speed fullStep\r\n");
-    pc.printf("To move motor: move -d|s motorID nStep \r\n");
-    pc.printf("     -d move motor[motorID] to position of nStep \r\n");
-    pc.printf("     -s move motor[motorID] nStep steps. \r\n");
-    pc.printf("        If nStep>0, move forward; if nStep<-0, move backward\r\n");
+    pc.printf("      setm motorID nOrigin nNow speed fullStep   :set motor's parameters, motorID=1 for LEDmotor, =2 for APDmotor\n");
+    pc.printf("      move -d|s motorID nStep        : move the motor with motorID \r\n");
+    pc.printf("        -d move motor[motorID] to position of nStep \n");
+    pc.printf("        -s move motor[motorID] nStep steps. \n");
+    pc.printf("          If nStep>0, move forward; if nStep<-0, move backward\r\n");
 }
 
 void dispMotorStatus() {
-    printf("motor[1] is motorLED: nOrigin=%d, nNow=%d, motorSpd=%3.2f steps/s, fullStep=%d\r\n",nOrigin[1], nNow[1],motorSpd[1],fullStep[1]);
+    pc.printf("motor[1] is motorLED: nOrigin=%d, nNow=%d, motorSpd=%3.2f steps/s, fullStep=%d\r\n",nOrigin[1], nNow[1],motorSpd[1],fullStep[1]);
 
-    printf("motor[2] is motorAPD: nOrigin=%d, nNow=%d, motorSpd=%3.2f steps/s, fullStep=%d\r\n",nOrigin[2], nNow[2],motorSpd[2],fullStep[2]);
+    pc.printf("motor[2] is motorAPD: nOrigin=%d, nNow=%d, motorSpd=%3.2f steps/s, fullStep=%d\r\n",nOrigin[2], nNow[2],motorSpd[2],fullStep[2]);
 
 }
 
