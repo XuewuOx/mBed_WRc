@@ -20,12 +20,12 @@ DigitalOut clkLED(p21);
 DigitalOut enbLED(p23);
 DigitalOut dirLED(p25); // 0 clockwise, 1 anti-clockwise
 // different from Matlab, due to xor in matlab
-DigitalOut fulLED(p27);
+DigitalOut fulLED(p29); // used to be 27, changed for serial comm
 
 DigitalOut clkAPD(p22);
 DigitalOut enbAPD(p24);
 DigitalOut dirAPD(p26); // 0 clockwise, 1 anti-clockwise
-DigitalOut fulAPD(p28);
+DigitalOut fulAPD(p30); // used to be 28, changed to 30 for serial comm
 
 DigitalOut *pCLK[2];
 DigitalOut *pENB[2];

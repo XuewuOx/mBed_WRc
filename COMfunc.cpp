@@ -24,7 +24,7 @@ extern void startA2D(unsigned int Fs, unsigned int nSamplesRequired);
 /* ----------------------------------------------
  *   Variable defination for COM communication
 */
-static char *cmdMoveMotor = "move";
+// static char *cmdMoveMotor = "move";
 
 // Serial pc(USBTX,USBRX); // tx, rx
 MODSERIAL pc(USBTX,USBRX);
@@ -47,12 +47,16 @@ int nMsgCharIn;
 // -----------------------
 //  variables and functions of UART(P13,P14) for PIC-SineGnerator
 
-MODSERIAL sinegen(p9,p10);
-// MODSERIAL sinegen(p13,p14);
-// MODSERIAL sinegen(p28,p27);
+ MODSERIAL irdrive(p9,p10);
+ // MODSERIAL sinegen(p13,p14);
+ MODSERIAL uvdrive(p28,p27);
+
 void initCOMpc();
 void Tx13_interrupt(MODSERIAL_IRQ_INFO *q);
 void Rx14_interrupt(MODSERIAL_IRQ_INFO *q);
+
+void Tx28_interrupt(MODSERIAL_IRQ_INFO *q);
+void Rx27_interrupt(MODSERIAL_IRQ_INFO *q);
 
 void txCallback(MODSERIAL_IRQ_INFO *q);
 void txEmpty(MODSERIAL_IRQ_INFO *q);
@@ -79,13 +83,20 @@ volatile int tx13_out=0;
 
 void initCOMpc()
 {
-    sinegen.baud(9600);
+    irdrive.baud(9600);
     // Setup a serial interrupt function to receive data
-    sinegen.attach(&Rx14_interrupt, MODSERIAL::RxIrq);
+    irdrive.attach(&Rx14_interrupt, MODSERIAL::RxIrq);
     // Setup a serial interrupt function to transmit data
-    sinegen.attach(&Tx13_interrupt, MODSERIAL::TxIrq);
+    irdrive.attach(&Tx13_interrupt, MODSERIAL::TxIrq);
     
+    uvdrive.baud(9600);
+    uvdrive.attach(&Rx27_interrupt, MODSERIAL::RxIrq);
+    uvdrive.attach(&Tx28_interrupt, MODSERIAL::TxIrq);
     
+  //  sinegen.baud(9600);
+  //  sinegen.attach(&Rx27_interrupt, MODSERIAL::RxIrq);
+  //  sinegen.attach(&Tx28_interrupt, MODSERIAL::TxIrq);
+
     pc.baud(115200);
 //   pc.attach(&rxCallback, Seriall::RxIrq);
 //    pc.attach(&rxCallback);
@@ -136,11 +147,11 @@ void rxCallback(MODSERIAL_IRQ_INFO *q) {
     }
     
     endofcmd=-1;
-    if ((c == 'u') && (brightness < 0.5)) {
+    if ((c == '^') && (brightness < 0.5)) {
                 brightness += 0.01;
                 led2 = brightness;
             }
-            if ((c == 'd') && (brightness > 0.0)) {
+            if ((c == 'V') && (brightness > 0.0)) {
                 brightness -= 0.01;
                 led2 = brightness;
             }
@@ -209,12 +220,25 @@ void cmdProcess()
      // DEBUGF("irdrive cmd detected, %s\n", msgBufIn);
     // Start Critical Section - don't interrupt while changing global buffer variables
     nValidArgs=sscanf(msgBufIn, "ir%s\n", tx13_buffer);
-    sinegen.puts(tx13_buffer);
+    irdrive.puts(tx13_buffer);
     pc.puts(tx13_buffer);
     led4=!led4;
     return;
    }
    
+   if (strcmp2(msgBufIn,"uv",2)==1)
+      {
+        // DEBUGF("irdrive cmd detected, %s\n", msgBufIn);
+       // Start Critical Section - don't interrupt while changing global buffer variables
+       nValidArgs=sscanf(msgBufIn, "uv%s\n", tx13_buffer);
+       uvdrive.puts(tx13_buffer);
+       irdrive.puts(tx13_buffer);
+       pc.puts(tx13_buffer);
+       led4=!led4;
+       return;
+      }
+
+
    if (strcmp2(msgBufIn,"a2d",3)==1)
    {
      // DEBUGF("irdrive cmd detected, %s\n", msgBufIn);
@@ -254,8 +278,8 @@ void Rx14_interrupt(MODSERIAL_IRQ_INFO *q) {
     led4=!led4;
 // Loop just in case more than one character is in UART's receive FIFO buffer
 // Stop if buffer full
-    while (sinegen.readable()) {
-        rxch = sinegen.getc();
+    while (irdrive.readable()) {
+        rxch = irdrive.getc();
 // Uncomment to Echo to USB serial to watch data flow
         pc.putc(rxch);
         
@@ -271,7 +295,7 @@ void Tx13_interrupt(MODSERIAL_IRQ_INFO *q) {
 // Loop to fill more than one character in UART's transmit FIFO buffer
 // Stop if buffer empty
     while ( tx13_out !=tx13_in) {
-        sinegen.putc(tx13_buffer[tx13_out]);
+        irdrive.putc(tx13_buffer[tx13_out]);
         // pc.putc(tx13_buffer[tx13_out]);
         DEBUGF("%c",tx13_buffer[tx13_out]);
         tx13_out = (tx13_out + 1) % buffer_size;
@@ -281,6 +305,37 @@ void Tx13_interrupt(MODSERIAL_IRQ_INFO *q) {
     return;
 }
 
+
+// Interupt Routine to read in data from serial port
+void Rx27_interrupt(MODSERIAL_IRQ_INFO *q) {
+    char rxch;
+    led4=!led4;
+// Loop just in case more than one character is in UART's receive FIFO buffer
+// Stop if buffer full
+    while (uvdrive.readable()) {
+        rxch = uvdrive.getc();
+// Uncomment to Echo to USB serial to watch data flow
+        pc.putc(rxch);
+        }
+    led4=0;
+    return;
+}
+// Interupt Routine to write out data to serial port
+void Tx28_interrupt(MODSERIAL_IRQ_INFO *q) {
+  //  led4debug=1;
+  led1=!led1;
+// Loop to fill more than one character in UART's transmit FIFO buffer
+// Stop if buffer empty
+    while ( tx13_out !=tx13_in) {
+        uvdrive.putc(tx13_buffer[tx13_out]);
+        // pc.putc(tx13_buffer[tx13_out]);
+        DEBUGF("%c",tx13_buffer[tx13_out]);
+        tx13_out = (tx13_out + 1) % buffer_size;
+    }
+   // led4debug=0;
+   // DEBUGF("%c",tx13_buffer[tx13_out]);
+    return;
+}
 
 bool strcmp2(char *str1, char *str2, int len)
 {

@@ -27,7 +27,7 @@ Ticker flipper1;
 
 extern int endofcmd; // -1 for normal char, 0 for 0x0D, 1 for 0x0A
                  // endofcmd =1 (TRUE) only when received 0D 0A ("\r\n")
-// extern MODSERIAL sinegen;
+
                  
 int main() {
 	unsigned int Fs=500;
@@ -51,8 +51,6 @@ int main() {
     // wait(0.1);
     // DEBUGF("Hello world! by printf bug\r\n");
     // pc.printf("Hello world!\r\n\r\n");
-    // sinegen.printf("Hello world! by printf bug\r\n");
-    // sinegen.printf("Hello world!\r\n\r\n");
     // mheart = 1;
     
 
