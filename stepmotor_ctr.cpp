@@ -19,6 +19,7 @@
 */
 extern MODSERIAL pc;
 extern DigitalOut led4;
+extern DigitalOut led1;
 
 
 /* -------------
@@ -120,17 +121,19 @@ void moveMotornSteps(int motorID, int nSteps) {
 void moveMotor2Dest(int motorID, int dest) {
     int k;
     DEBUGF("motorID=%d, dest=%d\n",motorID, dest);
-
+ led1=1;
+ led4=1;
     k=motorID-1;
     if ((k==0)||(k==1))
-    { // LED motor
+    { // LED or APD motor
 
         if (*pENB[k]==1) { // motorLEd is moving, have to wait until it stops
             printf("motor[%d] is moving. move cmd is ignored\n", k+1);
             return;
         }
-        if (dest==nNow[motorID]) { // DEBUGF("motor[%d] arrives at %d \r\n", motorID, nNow[motorID]);
-            dispMotorStatus();
+        if (dest==nNow[motorID]) {
+        	DEBUGF("motor[%d] arrives at %d \n", motorID, nNow[motorID]);
+            // dispMotorStatus();
             return;
         }
         *pENB[k]=0; // set enbLED=0 to ensure no movement while seting clk
@@ -163,8 +166,9 @@ void clkMotorLED() {
         tickerMotor[0].detach();
         *pENB[0]=0;
         led4=0;
-        // pc.printf("motorLED arrives at %d \r\n", nNow[MOTORIDLED]);
-        dispMotorStatus();
+        led1=0;
+        DEBUGF("motorLED arrives at %d \r\n", nNow[MOTORIDLED]);
+        // dispMotorStatus();
         return;
     }
 
@@ -190,8 +194,8 @@ k=1;
         tickerMotor[1].detach();
         *pENB[k]=0;
         led4=0;
-        // pc.printf("motorLED arrives at %d \r\n", nNow[MOTORIDLED]);
-        dispMotorStatus();
+        DEBUGF("motorLED arrives at %d \r\n", nNow[MOTORIDLED]);
+        // dispMotorStatus();
         return;
     }
 

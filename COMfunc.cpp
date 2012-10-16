@@ -191,7 +191,7 @@ void cmdProcess()
     DEBUGF("%d Args: moveType=%c, ID=%d, para=%d\n", nValidArgs,moveType, motorID, k);
     if (nValidArgs!=3)
     { // wrong command
-     printf("No enought input parameters. move -s|d motorID int\n");
+     printf("No enough input parameters. move -s|d motorID int\n");
      return;
     }
     if (moveType=='d')
@@ -286,7 +286,7 @@ void cmdProcess()
 	  {
 		  DEBUGF("uncompleted command, ignored. \n");
 	  }
-	  DEBUGF("cmdPrcess() returns\n");
+	  // DEBUGF("cmdPrcess() returns\n");
 	  return;
    }
   // not a pre-defined command, ignored.

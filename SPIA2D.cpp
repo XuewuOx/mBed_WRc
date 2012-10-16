@@ -101,7 +101,7 @@ if (ADCstatus==1)
               for (i=0;i<maxSamples;i++)
                {
                   printf("%04d ", a2dvalue[i][0]);
-                    if (i%8==7)printf("\n");
+                    if (i%10==9)printf("\n");
                }
                // printf("]\n");
               // Now wait for main to process the ADCstatus

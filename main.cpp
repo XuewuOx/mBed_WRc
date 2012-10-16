@@ -106,16 +106,19 @@ int main()
 } // end of main
 
 void swingLED(int posA, int posB, int nSam)
-{ int i,nSteps;
-float kk;
-	printf("swing LED from A=%d to B=%d and collect %d UV/IR samples per step\n",posA, posB, nSam);
-    moveMotor2Dest(MOTORIDLED, posA);
-    // return;
-    if(nNow[MOTORIDLED]<posA)
-    	nSteps=posA-nNow[MOTORIDLED];
-    else
-    	nSteps=nNow[MOTORIDLED]-posA;
+{ 	int nSteps, dirMotor;
+	int i,destTemp;
+	float kk;
+	float ms0; // motor speed temp
 
+	printf("swing LED from A=%d to B=%d and collect %d UV/IR samples per step\n",posA, posB, nSam);
+    // move from nNow to posA at a fast speed
+	ms0=motorSpd[MOTORIDLED];
+    motorSpd[MOTORIDLED]=5; // 5 steps per second
+    moveMotor2Dest(MOTORIDLED, posA);
+
+    // set wait time for motor achieve posA
+    nSteps=abs(posA-nNow[MOTORIDLED]);
     kk=(float) nSteps/motorSpd[MOTORIDLED]+2;  // steps per second
     if (kk>10.0)
     	wdt.kick(kk);
@@ -124,35 +127,45 @@ float kk;
     { //  printf(" %d ", nNow[MOTORIDLED]);
          wait(0.001);
     }
+    wait(1);
+    // restor wait time and motor speed
     if (kk<10.0) wdt.kick(10.0);
-    pc.printf("\n, So far, OK!\n");
+    motorSpd[MOTORIDLED]=ms0; // restore the original value of motor speed
+    // DEBUGF("\n, posA OK!\n");
+    dispMotorStatus();
+
+    dirMotor=posB-posA;
+    nSteps=abs(dirMotor);
+
+    ADCstatus=0;
+	startA2D(Fs,nSam);
+	do{  wait(0.001);	} while(ADCstatus!=2);
+    for (i=0; i<nSteps; i++)
+    {
+    	if (dirMotor==0)
+    		{break;}
+    	if (dirMotor>0)
+    		{   moveMotornSteps(MOTORIDLED,1);
+    			destTemp=nNow[MOTORIDLED]+1;
+    		}
+    	else
+    		{   moveMotornSteps(MOTORIDLED,-1);
+    			destTemp=nNow[MOTORIDLED]-1;
+    		}
+    	while(nNow[MOTORIDLED]!=destTemp)
+    	{ //  printf(" %d ", nNow[MOTORIDLED]);
+    		wait(0.001);
+    	}
+    	wait(1);
+    	// DEBUGF(" %d-th moveMotor2Dest, OK!\n", i+1);
+    	startA2D(Fs,nSam);
+    	do{  wait(0.001);	} while(ADCstatus!=2);
+    	// DEBUGF("%d-th data collection, OK!\n", i+1);
+    	DEBUGF("\n");
+    	wdt.feed();
+    }
+    dispMotorStatus();
     return;
-
-    // dispMotorStatus();
-    if (posB<posA)
-    {   ADCstatus=0;
-    	for (i=posA;i>posB;i--)
-    	 {
-    	    startA2D(Fs,nSam);
-    	    do{  	} while(ADCstatus!=2);
-    	    moveMotornSteps(MOTORIDLED,-1);
-    	    while(nNow[MOTORIDLED]!=i-1);
-    	    ADCstatus=0;  //set 0 for one-shot sampling, see heartbeat()in RTCfunc.cpp
-    	    wdt.feed();
-    	 }
-    }
-    else
-    {  ADCstatus=0;
-    	  for (i=posA;i<posB;i++)
-    	    	 {  startA2D(Fs,nSam);
-    	    	    do{  	} while(ADCstatus!=2);
-    	    	    moveMotornSteps(MOTORIDLED,1);
-    	    	    while(nNow[MOTORIDLED]!=i+1);
-    	    	    ADCstatus=0;  //set 0 for one-shot sampling, see heartbeat()in RTCfunc.cpp
-    	    	    wdt.feed();
-    	    	 }
-
-    }
 
 }
 
