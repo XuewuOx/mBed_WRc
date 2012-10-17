@@ -53,7 +53,8 @@ int nMsgCharIn;
 
  MODSERIAL irdrive(p9,p10);
  // MODSERIAL sinegen(p13,p14);
- MODSERIAL uvdrive(p28,p27);
+  MODSERIAL uvdrive(p28,p27);
+ // MODSERIAL uvdrive(p13,p14);
 
 void initCOMpc();
 void Tx13_interrupt(MODSERIAL_IRQ_INFO *q);

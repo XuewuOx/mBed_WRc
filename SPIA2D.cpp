@@ -18,11 +18,17 @@ extern DigitalOut led1;
 extern MODSERIAL pc;
 
 
-SPI spimax186(p5, p6, p7); // mosi, miso, sclk
-DigitalOut cs(p8);
+// SPI spimax186(p5, p6, p7); // mosi, miso, sclk
+// DigitalOut cs(p8);
+// // DigitalIn sstrb(p11);
+// InterruptIn ExIntr_sstrb(p11);
 
-// DigitalIn sstrb(p11);
-InterruptIn ExIntr_sstrb(p11);
+
+SPI spimax186(p11, p12, p13); // mosi, miso, sclk
+DigitalOut cs(p14);
+InterruptIn ExIntr_sstrb(p15);
+
+
 
 char adChn; // current A2D channel
 unsigned int a2dvalue[MAXSAM][2]; //
