@@ -26,6 +26,10 @@ Ticker flipper1;
 // DigitalOut mheart(LED3); // LED3 has been used for heartbeat in RTCfunc.h/cpp
 
 
+DigitalOut irGainCtr(p19);
+DigitalOut uvGainCtr(p20);
+
+
 extern int endofcmd; // -1 for normal char, 0 for 0x0D, 1 for 0x0A
                  // endofcmd =1 (TRUE) only when received 0D 0A ("\r\n")
 extern MODSERIAL pc;
@@ -180,10 +184,13 @@ void dispCmdInfo()
 	    pc.printf("  (2) irs##<CR>  to start IR laser source\n");
 	    pc.printf("      irt<CR>  to stop IR source and save its frq to EEROM\n");
 	    pc.printf("      irf[+|-|#]###<CR>  to set frequency of IR LED current\n");
+	    pc.printf("      irg###<CR>  to set IR's amplifier gain to ###\n");
+
 
 	    pc.printf("  (3) uvs##<CR>  to start UV LED source\n");
 	    pc.printf("      uvt<CR>  to stop UV source and save its frq to EEROM\n");
 	    pc.printf("      uvf[+|-|#]###<CR>  to set frequency of UV LED current\n");
+	    pc.printf("      uvg###<CR>  to set UV's amplifier gain to ###\n");
 
 	    pc.printf("  (4) a2d type Fs nSamples<CR>\n");
 	    pc.printf("          type = s  start a2d conversion and collect nSamples at Fs Hz\n");

@@ -11,11 +11,15 @@
 /* ----------------------------------------------
 *   External variable defination for COM communication
 */
+extern DigitalOut irGainCtr;
+extern DigitalOut uvGainCtr;
+
 extern DigitalOut led1;
 extern PwmOut led2;
 extern DigitalOut led4;
 
 extern float brightness;
+
 
 // extern void moveMotornSteps(int, int);
 // extern void moveMotor2Dest(int, int);
@@ -173,6 +177,7 @@ void cmdProcess()
   char chID; // ID of select A2D channel for AD conversion
   int nOri, nNow, fullstep;
   float spd;
+  unsigned int gainCtr;
 
   int aa, bb;
   // printf("received cmd %s",msgBufIn);
@@ -221,28 +226,55 @@ void cmdProcess()
     dispMotorStatus();
      return;
   }
-  
+  // IR command
    if (strcmp2(msgBufIn,"ir",2)==1)
    {
      // DEBUGF("irdrive cmd detected, %s\n", msgBufIn);
     // Start Critical Section - don't interrupt while changing global buffer variables
-    nValidArgs=sscanf(msgBufIn, "ir%s\n", tx13_buffer);
-    irdrive.puts(tx13_buffer);
-    pc.puts(tx13_buffer);
-    led4=!led4;
-    return;
+	   if(msgBufIn[2]=='g')
+	   { // IR gain control
+		   nValidArgs=sscanf(msgBufIn, "irg%d\n", &gainCtr);
+		   if (gainCtr==1)
+			   irGainCtr=1;
+		   else if (gainCtr==100)
+			   irGainCtr=0;
+		   else
+			   DEBUGF("IRgain=%d is not supported.\n", gainCtr);
+
+	   }
+	   else
+	   {    nValidArgs=sscanf(msgBufIn, "ir%s\n", tx13_buffer);
+	        irdrive.puts(tx13_buffer);
+	        pc.puts(tx13_buffer);
+	   }
+	        led4=!led4;
+	        return;
    }
    
+   // UV command
    if (strcmp2(msgBufIn,"uv",2)==1)
       {
         // DEBUGF("irdrive cmd detected, %s\n", msgBufIn);
        // Start Critical Section - don't interrupt while changing global buffer variables
-       nValidArgs=sscanf(msgBufIn, "uv%s\n", tx13_buffer);
-       uvdrive.puts(tx13_buffer);
-       irdrive.puts(tx13_buffer);
-       pc.puts(tx13_buffer);
-       led4=!led4;
-       return;
+	   if(msgBufIn[2]=='g')
+	   { // UV gain control
+		   nValidArgs=sscanf(msgBufIn, "uvg%d\n", &gainCtr);
+		   if (gainCtr==1)
+			   uvGainCtr=1;
+		   else if (gainCtr==100)
+			   uvGainCtr=0;
+		   else
+			   DEBUGF("UVgain=%d is not supported.\n", gainCtr);
+
+	   }
+	   else
+       {	nValidArgs=sscanf(msgBufIn, "uv%s\n", tx13_buffer);
+       	   uvdrive.puts(tx13_buffer);
+       	   irdrive.puts(tx13_buffer);
+       	   pc.puts(tx13_buffer);
+       }
+       	   led4=!led4;
+       	   return;
       }
 
 
