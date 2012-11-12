@@ -25,21 +25,26 @@ extern DigitalOut led1;
 /* -------------
 * variable definition
 */
-DigitalOut clkLED(p21);
-DigitalOut enbLED(p23);
-DigitalOut dirLED(p25); // 0 clockwise, 1 anti-clockwise
+DigitalOut clkLED(p22);
+DigitalOut enbLED(p24);
+DigitalOut dirLED(p23); // 0 clockwise, 1 anti-clockwise
 // different from Matlab, due to xor in matlab
-DigitalOut fulLED(p29); // used to be 27, changed for serial comm
+DigitalOut fulLED(p21); // used to be 27, changed for serial comm
 
-DigitalOut clkAPD(p22);
-DigitalOut enbAPD(p24);
-DigitalOut dirAPD(p26); // 0 clockwise, 1 anti-clockwise
+DigitalOut clkAPD(p25);
+DigitalOut enbAPD(p26);
+DigitalOut dirAPD(p30); // used to be 29, p29 now for microSWitch
 DigitalOut fulAPD(p30); // used to be 28, changed to 30 for serial comm
 
 DigitalOut *pCLK[2];
 DigitalOut *pENB[2];
 DigitalOut *pDIR[2];
 DigitalOut *pSTP[2];
+
+DigitalIn uSW(p29); // =1 when the LED motor is at the end of the rail
+                    // =0 otherwise
+int statusLEDMotor; // 0 idle, 1 moving, 2 is at the dest, 3 is at the end
+
 
 float motorSpd[NUMMOTOR]; // steps per second
 bool fullStep[NUMMOTOR]; // 1 for full step, 0 for half step
@@ -68,13 +73,15 @@ void dispMotorCmdHelp() {
 
 void dispMotorStatus() {
     pc.printf("motor[1] is motorLED: nOrigin=%d, nNow=%d, motorSpd=%3.2f steps/s, fullStep=%d\r\n",nOrigin[1], nNow[1],motorSpd[1],fullStep[1]);
-
-    pc.printf("motor[2] is motorAPD: nOrigin=%d, nNow=%d, motorSpd=%3.2f steps/s, fullStep=%d\r\n",nOrigin[2], nNow[2],motorSpd[2],fullStep[2]);
+    pc.printf("statusLEDMotor=%d, uSW(p29)=%d\n ", statusLEDMotor, (int) uSW);
+   // pc.printf("motor[2] is motorAPD: nOrigin=%d, nNow=%d, motorSpd=%3.2f steps/s, fullStep=%d\r\n",nOrigin[2], nNow[2],motorSpd[2],fullStep[2]);
 
 }
 
 void setMotor(int motorID, int nO, int nN, float spd, int fullstep) {
     int k;
+
+    statusLEDMotor=0;
 
     pCLK[0]=&clkLED;
     pENB[0]=&enbLED;
@@ -121,6 +128,8 @@ void moveMotornSteps(int motorID, int nSteps) {
 void moveMotor2Dest(int motorID, int dest) {
     int k;
     DEBUGF("motorID=%d, dest=%d\n",motorID, dest);
+    statusLEDMotor=1;
+
  led1=1;
  led4=1;
     k=motorID-1;
@@ -133,14 +142,20 @@ void moveMotor2Dest(int motorID, int dest) {
         }
         if (dest==nNow[motorID]) {
         	DEBUGF("motor[%d] arrives at %d \n", motorID, nNow[motorID]);
-            // dispMotorStatus();
+            dispMotorStatus();
             return;
         }
-        *pENB[k]=0; // set enbLED=0 to ensure no movement while seting clk
+        if (uSW==1 && dest>nNow[motorID])
+        { // LED motor has been at the end of the rail. No further movement
+        	DEBUGF("LED motor[1] has been at the end of the rail. Stop");
+        	dispMotorStatus();
+        	return;
+        }
+        *pENB[k]=0; // set enbLED=0 to ensure no movement while setting clk
         if (dest<nNow[motorID])
-            *pDIR[k]=1;
-        else
             *pDIR[k]=0;
+        else
+            *pDIR[k]=1;
         nDest[motorID]=dest;
         led4=0;
         *pCLK[k]=0;
@@ -161,21 +176,36 @@ void moveMotor2Dest(int motorID, int dest) {
 // the interrupt routine for tikerMotor[1],
 // invoked two times at one step motor movement
 void clkMotorLED() {
+    if (uSW==1 && *pDIR[0]==1)
+    { // LED motor has been at the end of the rail. No further movement
+    	DEBUGF("LED motor[1] has been at the end of the rail. Stop");
+
+        tickerMotor[0].detach();
+        *pENB[0]=0;
+        led4=0;
+        led1=0;
+        // dispMotorStatus();
+    	statusLEDMotor=3;
+        return;
+    }
+
     if ((*pCLK[0]==0) && (nNow[MOTORIDLED]==nDest[MOTORIDLED])) { // stop
         // tickerLED.detach();
+
         tickerMotor[0].detach();
         *pENB[0]=0;
         led4=0;
         led1=0;
         DEBUGF("motorLED arrives at %d \r\n", nNow[MOTORIDLED]);
         // dispMotorStatus();
+        statusLEDMotor=2; //printf("clkMotorLED() set 2\n");
         return;
     }
 
     *pCLK[0]=!(*pCLK[0]);
      led4=!led4;
     if (*pCLK[0]==0) { // drop edge
-        if (*pDIR[0]==1)
+        if (*pDIR[0]==0)
             nNow[MOTORIDLED]--;
         else
             nNow[MOTORIDLED]++;
@@ -202,7 +232,7 @@ k=1;
     *pCLK[1]=!(*pCLK[1]);
      led4=!led4;
     if (*pCLK[1]==0) { // drop edge
-        if (*pDIR[1]==1)
+        if (*pDIR[1]==0)
             nNow[MOTORIDAPD]--;
         else
             nNow[MOTORIDAPD]++;

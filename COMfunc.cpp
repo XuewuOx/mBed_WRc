@@ -211,6 +211,13 @@ void cmdProcess()
    
   if (strcmp2(msgBufIn,"setm",4)==1)
   {  nValidArgs=sscanf(msgBufIn, "setm %d %d %d %f %d\n", &motorID, &nOri, &nNow, &spd, &fullstep);
+
+  	printf("nValidArgs=%d", nValidArgs);
+    if (nValidArgs==0)
+    {
+        dispMotorStatus();
+        return;
+    }
     if (nValidArgs < 5)
     { // wrong command
      printf("No enought input parameters. setm motorID nOrigin nNow speed fullstep\n");
@@ -222,6 +229,7 @@ void cmdProcess()
      return;
     }
     // correct number of input arguments
+
     setMotor(motorID, nOri, nNow, spd, fullstep);
     dispMotorStatus();
      return;
@@ -270,7 +278,6 @@ void cmdProcess()
 	   else
        {	nValidArgs=sscanf(msgBufIn, "uv%s\n", tx13_buffer);
        	   uvdrive.puts(tx13_buffer);
-       	   irdrive.puts(tx13_buffer);
        	   pc.puts(tx13_buffer);
        }
        	   led4=!led4;

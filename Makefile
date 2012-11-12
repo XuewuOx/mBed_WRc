@@ -34,7 +34,7 @@ OBJCOPY = $(GCC_BIN)arm-none-eabi-objcopy
         
 # cs-make all
 all: $(PROJECT).bin
-	del main.o
+#	del .\main.o
 
 #cs-make clean
 clean:

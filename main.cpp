@@ -44,6 +44,7 @@ extern char ADCstatus; // 0 for idle,
 
 extern int nNow[NUMMOTOR];
 extern float motorSpd[NUMMOTOR]; // steps per second
+extern int statusLEDMotor; // 0 idle, 1 moving, 2 is at the dest, 3 is at the end
 
 void dispCmdInfo();
 
@@ -58,7 +59,7 @@ int main()
         { led2 = 0.1; DEBUGF("\n\n!!--- WTD reset (LED2=0.1) ---!!\n");}
     else 
         { led1 = 1; DEBUGF("\n\n----- Power on reset (LED1=1) -----\n");}
-    printf(" Compiled on %s at %s (Xuewu Dai)\n", __DATE__, __TIME__);
+    printf(" Compiled on %s at %s (Xuewu Daniel Dai)\n", __DATE__, __TIME__);
     //    setTime(2012, 5, 6, 16, 11, 00);
     dispTime();
 // setup a 10 second timeout on watchdog timer hardware
@@ -79,9 +80,9 @@ int main()
       dispMotorStatus();
     wait(0.2);
     
-    setMotor(MOTORIDLED, 0, 0, 1, FULLSTEP); // for LED
+    setMotor(MOTORIDLED, 0, 0, 100, FULLSTEP); // for LED
     setMotor(2, 0, 0, 1, FULLSTEP); // for LED
-    moveMotor2Dest(MOTORIDLED, 2);
+    moveMotor2Dest(MOTORIDLED, 20);
     
       // int account=0;
     while (1) {
@@ -98,6 +99,14 @@ int main()
         { // required number of samples have been collected
            ADCstatus=0; // set 3 for continusou sampling,
                         // set 0 for one-shot sampling, see heartbeat()in RTCfunc.cpp
+        }
+
+        if (statusLEDMotor==2||statusLEDMotor==3)
+        {
+            dispMotorStatus();
+        	statusLEDMotor=0;
+        	statusLEDMotor=0;
+
         }
 
         { // debug code for WTD
@@ -118,7 +127,7 @@ void swingLED(int posA, int posB, int nSam)
 	printf("swing LED from A=%d to B=%d and collect %d UV/IR samples per step\n",posA, posB, nSam);
     // move from nNow to posA at a fast speed
 	ms0=motorSpd[MOTORIDLED];
-    motorSpd[MOTORIDLED]=5; // 5 steps per second
+    motorSpd[MOTORIDLED]=100; // 5 steps per second
     moveMotor2Dest(MOTORIDLED, posA);
 
     // set wait time for motor achieve posA
@@ -131,7 +140,7 @@ void swingLED(int posA, int posB, int nSam)
     { //  printf(" %d ", nNow[MOTORIDLED]);
          wait(0.001);
     }
-    wait(1);
+    // wait(1);
     // restor wait time and motor speed
     if (kk<10.0) wdt.kick(10.0);
     motorSpd[MOTORIDLED]=ms0; // restore the original value of motor speed
@@ -160,7 +169,7 @@ void swingLED(int posA, int posB, int nSam)
     	{ //  printf(" %d ", nNow[MOTORIDLED]);
     		wait(0.001);
     	}
-    	wait(1);
+    	// wait(1);
     	// DEBUGF(" %d-th moveMotor2Dest, OK!\n", i+1);
     	startA2D(Fs,nSam);
     	do{  wait(0.001);	} while(ADCstatus!=2);
