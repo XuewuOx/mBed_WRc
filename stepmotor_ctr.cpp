@@ -72,8 +72,8 @@ void dispMotorCmdHelp() {
 }
 
 void dispMotorStatus() {
-    pc.printf("motor[1] is motorLED: nOrigin=%d, nNow=%d, motorSpd=%3.2f steps/s, fullStep=%d\r\n",nOrigin[1], nNow[1],motorSpd[1],fullStep[1]);
-    pc.printf("statusLEDMotor=%d, uSW(p29)=%d\n ", statusLEDMotor, (int) uSW);
+    pc.printf("motor[1] is motorLED: nOrigin=%d, nNow=%d, motorSpd=%3.2f steps/s, fullStep=%d, ",nOrigin[1], nNow[1],motorSpd[1],fullStep[1]);
+    pc.printf("statusLEDMotor=%d, uSW(p29)=%d\n", statusLEDMotor, (int) uSW);
    // pc.printf("motor[2] is motorAPD: nOrigin=%d, nNow=%d, motorSpd=%3.2f steps/s, fullStep=%d\r\n",nOrigin[2], nNow[2],motorSpd[2],fullStep[2]);
 
 }
