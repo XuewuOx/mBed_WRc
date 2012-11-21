@@ -1,3 +1,4 @@
 mbed
 MODSERIAL
 /RTCfunc.o
+/*.o
