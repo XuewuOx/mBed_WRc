@@ -212,7 +212,7 @@ void cmdProcess()
   if (strcmp2(msgBufIn,"setm",4)==1)
   {  nValidArgs=sscanf(msgBufIn, "setm %d %d %d %f %d\n", &motorID, &nOri, &nNow, &spd, &fullstep);
 
-  	printf("nValidArgs=%d", nValidArgs);
+  	  DEBUGF("nValidArgs=%d", nValidArgs);
     if (nValidArgs==0)
     {
         dispMotorStatus();

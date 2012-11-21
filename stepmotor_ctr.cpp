@@ -13,6 +13,12 @@
 #include "MODSERIAL.h"
 #include "main.h"
 
+#define uSW_OpticRef 1
+#define uSW_WaterMes 0
+
+#define uSW_POSITION  0
+// uSWU_POSITION   1 when the uSW is at the optic reference end
+//                 0 when the uSW at the water measurement end
 
 /* -------------
 * external variable declaration
@@ -145,9 +151,15 @@ void moveMotor2Dest(int motorID, int dest) {
             dispMotorStatus();
             return;
         }
+
+#if uSWU_POSITION == uSW_OpticRef
         if (uSW==1 && dest>nNow[motorID])
-        { // LED motor has been at the end of the rail. No further movement
+#else
+        if (uSW==1 && dest<nNow[motorID])
+#endif
+	    { // LED motor has been at the end of the rail. No further movement
         	DEBUGF("LED motor[1] has been at the end of the rail. Stop");
+        	statusLEDMotor=3;
         	dispMotorStatus();
         	return;
         }
@@ -176,8 +188,13 @@ void moveMotor2Dest(int motorID, int dest) {
 // the interrupt routine for tikerMotor[1],
 // invoked two times at one step motor movement
 void clkMotorLED() {
-    if (uSW==1 && *pDIR[0]==1)
-    { // LED motor has been at the end of the rail. No further movement
+
+#if uSWU_POSITION == uSW_OpticRef
+	if (uSW==1 && *pDIR[0]==1)
+#else
+	if (uSW==1 && *pDIR[0]==0)
+#endif
+	{ // LED motor has been at the end of the rail. No further movement
     	DEBUGF("LED motor[1] has been at the end of the rail. Stop");
 
         tickerMotor[0].detach();

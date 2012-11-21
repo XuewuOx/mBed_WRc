@@ -10,8 +10,7 @@
 #include "MODSERIAL.h"
 #include "SPIA2D.h"
 
-#define maxChnID 1
-#define MAXSAM 2000
+
 
 
 extern DigitalOut led1;
@@ -106,29 +105,28 @@ if (ADCstatus==1)
               ADCstatus=2; // maxSamples of samples have been collected
               // DEBUGF("%d samples done.\n[", nSamples);
 
-              // for (i=0;i<maxSamples;i++)
-              //   {
-              //    printf("%04d ", a2dvalue[i][0]);
-              //      if (i%10==9)printf("\n");
-              //  }
-
+              // -------------------------
+              /*
+              // debug codes for print data to USB-RS232
+              printf("["); // start with [
               for (i=0;i<maxSamples;)
               { for (j=0;j<=maxChnID;j++)
               	  { for (k=0;k<10;k++)
-              	  	  printf("%04d ", a2dvalue[i+k][j]);
+              	  	  printf(" %04d", a2dvalue[i+k][j]);
               	  	  printf("\n");
               	  }
-        	  	printf("\n");
         	  	i=i+10;
               }
-               // printf("]\n");
+              printf("]\n"); // end with ]
+              */
+              //-----------------------------
+
               // Now wait for main to process the ADCstatus
                // ADCstatus=0; // set 3 for continusou sampling,
                           // set 0 for one-shot sampling, see heartbeat()in RTCfunc.cpp
           }
     else
         {   // have not collected enough data, start next conversion
-            nSamples=nSamples+1;
 
             // TODO: the TSSRB interrupt  does not work well
             // one TSSRB interrupt very two  Intr_timerA2D
@@ -145,6 +143,8 @@ if (ADCstatus==1)
 
             // OK, non-interrupt routine to get two A2D channels
             readA2D(0);
+            nSamples=nSamples+1;
+
             return;
         }
  else

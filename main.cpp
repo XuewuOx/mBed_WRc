@@ -41,6 +41,8 @@ extern char ADCstatus; // 0 for idle,
                 // 1 for coversion in progress,
                 // 2 for maxSamples has been collected
                 // 3  for continuous sampling
+extern unsigned int a2dvalue[][2];
+
 
 extern int nNow[NUMMOTOR];
 extern float motorSpd[NUMMOTOR]; // steps per second
@@ -102,7 +104,8 @@ int main()
         }
 
         if (statusLEDMotor==2||statusLEDMotor==3)
-        {
+        { // statusLEDMotor is set to 2 (arrives at the dest)
+        	// and to 3 (arrives at the switch) in clkMotorLED()
             dispMotorStatus();
         	statusLEDMotor=0;
         	statusLEDMotor=0;
@@ -125,6 +128,13 @@ void swingLED(int posA, int posB, int nSam)
 	float ms0; // motor speed temp
 
 	printf("swing LED from A=%d to B=%d and collect %d UV/IR samples per step\n",posA, posB, nSam);
+	if (nSam>MAXSAM)
+		{ printf("Too many samples. a2dvalue will overflow. Reset nSam=%d",MAXSAM);
+		nSam=MAXSAM;
+		}
+	// move motor one step before the starting position
+	// Because, at each step, we will move motor one step first followed by collecting data.
+	posA=posA-1;
     // move from nNow to posA at a fast speed
 	ms0=motorSpd[MOTORIDLED];
     motorSpd[MOTORIDLED]=100; // 5 steps per second
@@ -149,8 +159,31 @@ void swingLED(int posA, int posB, int nSam)
 
     dirMotor=posB-posA;
     nSteps=abs(dirMotor);
-
+    for (i=0;i<MAXSAM;i++)
+    	{a2dvalue[i][0]=4998;a2dvalue[i][1]=4999;}
     ADCstatus=0;
+    // prefix sequence of data packet
+    pc.printf("%%M posA=%d, nSteps=%d, nSam=%d, Fs=%d\r\n",posA, nSteps, nSam, Fs);
+    /*
+    // DEBUG codes for UART communicaiton with host PC/Beagle
+    for (int i=0;i<=nSteps;i++)
+    {
+    	pc.printf("dir%03d=[",i);
+    	for (int j=0;j<nSam;j++)
+    		pc.printf(" %04d",1000*i+j);
+    	pc.printf("]\r\n");
+
+    	pc.printf("duv%03d=[",i);
+    	for (int j=0;j<nSam;j++)
+    	    		pc.printf(" %04d",1000*i+j);
+    	pc.printf("]\r\n");
+    	wait(0.1);
+        wdt.feed();
+    }
+
+    return;
+    // end of DEBUG codes for UART comm
+*/
 	startA2D(Fs,nSam);
 	do{  wait(0.001);	} while(ADCstatus!=2);
     for (i=0; i<nSteps; i++)
@@ -173,10 +206,24 @@ void swingLED(int posA, int posB, int nSam)
     	// DEBUGF(" %d-th moveMotor2Dest, OK!\n", i+1);
     	startA2D(Fs,nSam);
     	do{  wait(0.001);	} while(ADCstatus!=2);
+    	// send UV IR data up to host PC via USB-RS232
+    	pc.printf("dir%03d=[",i);
+    	for (int j=0;j<nSam;j++)
+    		pc.printf(" %04d",a2dvalue[j][0]); // 0 for IR
+    	pc.printf("]\r\n");
+
+    	pc.printf("duv%03d=[",i);
+    	for (int j=0;j<nSam;j++)
+    	    		pc.printf(" %04d",a2dvalue[j][1]);// 1 for UV
+    	pc.printf("]\r\n");
+    	wait(0.1);
+
     	// DEBUGF("%d-th data collection, OK!\n", i+1);
-    	DEBUGF("\n");
     	wdt.feed();
     }
+    // terminate sequence of data packet
+    pc.printf("%% nROW=%d nCol=%d DATAIRUVEND\r\n",i,nSam);
+    // pc.printf("true A2D values\r\n");
     dispMotorStatus();
     return;
 

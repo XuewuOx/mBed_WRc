@@ -12,6 +12,9 @@
 #ifndef SPIA2D_H_
 #define SPIA2D_H_
 
+#define maxChnID 1
+#define MAXSAM 2000
+
 void Init_SPIMAX186(void);
 void readA2D(char chn);
 void startA2D(unsigned int Fs, unsigned int nSamplesRequired);
