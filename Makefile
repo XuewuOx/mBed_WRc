@@ -63,4 +63,5 @@ $(PROJECT).elf: $(OBJECTS) $(SYS_OBJECTS)
 # so that no manually copy *.bin to mBed is required. 
 # Press 'RESET' at mBed to start executing the program
 $(PROJECT).bin: $(PROJECT).elf
+	$(OBJCOPY) -O binary $< $@
 	$(OBJCOPY) -O binary $< $(MBEDDRIVE)\$@

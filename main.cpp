@@ -29,6 +29,7 @@ Ticker flipper1;
 DigitalOut irGainCtr(p19);
 DigitalOut uvGainCtr(p20);
 
+AnalogOut APDBiasVoltage(p18);
 
 extern int endofcmd; // -1 for normal char, 0 for 0x0D, 1 for 0x0A
                  // endofcmd =1 (TRUE) only when received 0D 0A ("\r\n")
@@ -207,15 +208,15 @@ void swingLED(int posA, int posB, int nSam)
     	startA2D(Fs,nSam);
     	do{  wait(0.001);	} while(ADCstatus!=2);
     	// send UV IR data up to host PC via USB-RS232
-    	pc.printf("dir%03d=[",i);
+    	pc.printf("dir%04d=[",destTemp);
     	for (int j=0;j<nSam;j++)
     		pc.printf(" %04d",a2dvalue[j][0]); // 0 for IR
-    	pc.printf("]\r\n");
+    	pc.printf("];\r\n");
 
-    	pc.printf("duv%03d=[",i);
+    	pc.printf("duv%04d=[",destTemp);
     	for (int j=0;j<nSam;j++)
     	    		pc.printf(" %04d",a2dvalue[j][1]);// 1 for UV
-    	pc.printf("]\r\n");
+    	pc.printf("];\r\n");
     	wait(0.1);
 
     	// DEBUGF("%d-th data collection, OK!\n", i+1);
@@ -229,6 +230,21 @@ void swingLED(int posA, int posB, int nSam)
 
 }
 
+void setAPDBiasVoltage(unsigned int ao_mv)
+{
+	 float per;
+	 int i;
+	 per=(float) ao_mv/3300.0; // 3.3v full range
+	 APDBiasVoltage=per;
+  /*   while(1) {
+    	 APDBiasVoltage = APDBiasVoltage + 0.01;
+         wait_us(1);
+         if(APDBiasVoltage == 1) {
+        	 APDBiasVoltage = 0;
+         }
+     }
+ */
+}
 
 void dispCmdInfo()
 {

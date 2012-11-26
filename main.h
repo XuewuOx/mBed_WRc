@@ -21,6 +21,7 @@
 #endif
 
 void swingLED(int posA, int posB, int nSam);
+void setAPDBiasVoltage(unsigned int ao_mv);
 
 
 #endif /* MAIN_H_ */

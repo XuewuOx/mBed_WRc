@@ -180,7 +180,10 @@ void cmdProcess()
   unsigned int gainCtr;
 
   int aa, bb;
-  // printf("received cmd %s",msgBufIn);
+  int ao_mv;
+
+
+  DEBUGF("received cmd: %s",msgBufIn);
   moveType='s';
   k=0;
   motorID=1;
@@ -327,6 +330,23 @@ void cmdProcess()
 		  DEBUGF("uncompleted command, ignored. \n");
 	  }
 	  // DEBUGF("cmdPrcess() returns\n");
+	  return;
+   }
+
+
+   if (strcmp2(msgBufIn,"d2a",3)==1)
+   { // swing LED source and collect UV/IR data
+	  nValidArgs=sscanf(msgBufIn, "d2a %d\n", &ao_mv);
+	  // DEBUGF("msgBufIn=%s, ao_mv=%d, nValidArgs=%d\n",msgBufIn, ao_mv, nValidArgs);
+	  if (nValidArgs==1)
+	  {
+		  printf("d2a %d received\n", ao_mv);
+		  setAPDBiasVoltage(ao_mv);
+	   }
+	  else
+	  {
+		  printf("uncompleted command \"d2a AnalogOutput(mv)\". ignored. \n");
+	  }
 	  return;
    }
   // not a pre-defined command, ignored.
