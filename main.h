@@ -20,8 +20,29 @@
     #define DEBUGF while(0)printf
 #endif
 
-void swingLED(int posA, int posB, int nSam);
-void setAPDBiasVoltage(unsigned int ao_mv);
+struct statusmbed{
+   unsigned int irm; // magnitude
+   unsigned int irf; // frequency
+   unsigned int irg; // gain
 
+   unsigned int uvm;
+   unsigned int uvf;
+   unsigned int uvg;
+
+   float APDbv; // bias voltage of APD (v)
+   float aomv; // analog output voltage (mv)
+   // int *p_statusLlEDMotor;
+   // int *p_nNow;
+   // float *p_motorSpd;
+
+   // int *p_ADCstatus;
+   // unsigned int *p_Fs;
+
+};
+
+void swingLED(int posA, int posB, int nSam);
+void setAPDBiasVoltage(float bvAPD);
+void setAnalogOut_mV(float ao_mv);
+void dispmBedStatus();
 
 #endif /* MAIN_H_ */

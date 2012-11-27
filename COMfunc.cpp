@@ -20,6 +20,7 @@ extern DigitalOut led4;
 
 extern float brightness;
 
+extern statusmbed smbed;
 
 // extern void moveMotornSteps(int, int);
 // extern void moveMotor2Dest(int, int);
@@ -181,7 +182,9 @@ void cmdProcess()
 
   int aa, bb;
   int ao_mv;
+  float vAPD;
 
+  float ka, b0;
 
   DEBUGF("received cmd: %s",msgBufIn);
   moveType='s';
@@ -246,20 +249,35 @@ void cmdProcess()
 	   { // IR gain control
 		   nValidArgs=sscanf(msgBufIn, "irg%d\n", &gainCtr);
 		   if (gainCtr==1)
-			   irGainCtr=1;
-		   else if (gainCtr==100)
-			   irGainCtr=0;
+			   { smbed.irg=gainCtr;
+			     irGainCtr=0;
+			     printf("%% OK irg=%d, irGainCtr(p19)=0", gainCtr);
+			   }
+		   else if (gainCtr==10)
+			   { smbed.irg=gainCtr;
+			     irGainCtr=1;
+			     printf("%% OK irg=%d, irGainCtr(p19)=1", gainCtr);
+			   }
 		   else
-			   DEBUGF("IRgain=%d is not supported.\n", gainCtr);
+			   DEBUGF("%% IRgain=%d is not supported.\n", gainCtr);
 
 	   }
 	   else
-	   {    nValidArgs=sscanf(msgBufIn, "ir%s\n", tx13_buffer);
-	        irdrive.puts(tx13_buffer);
-	        pc.puts(tx13_buffer);
-	   }
-	        led4=!led4;
-	        return;
+	      { nValidArgs=sscanf(msgBufIn, "ir%s\n", tx13_buffer);
+	        nValidArgs=sscanf(msgBufIn, "ir%d\n", &k);
+	   	    if (nValidArgs==1 && k>=0)
+	   	    	{	if (k==0)
+	   	    			smbed.irm=100;
+	   	    		else
+	   	    			smbed.irm=k;
+	   	    	}
+	   	    irdrive.puts(tx13_buffer);
+	        pc.puts("% OK");
+	        pc.puts(msgBufIn);
+	      }
+
+      led4=!led4;
+	  return;
    }
    
    // UV command
@@ -271,17 +289,23 @@ void cmdProcess()
 	   { // UV gain control
 		   nValidArgs=sscanf(msgBufIn, "uvg%d\n", &gainCtr);
 		   if (gainCtr==1)
-			   uvGainCtr=1;
+			   { uvGainCtr=0;
+			     printf("%% OK uvg=%d, uvGainCtr(p20)=0", gainCtr);
+			   // DigitalOut uvGainCtr(p20);
+			   }
 		   else if (gainCtr==100)
-			   uvGainCtr=0;
+			   { uvGainCtr=1;
+			   	 printf("%% OK uvg=%d, uvGainCtr(p20)=1", gainCtr);
+			   }
 		   else
-			   DEBUGF("UVgain=%d is not supported.\n", gainCtr);
+			   DEBUGF("%% UVgain=%d is not supported.\n", gainCtr);
 
 	   }
 	   else
        {	nValidArgs=sscanf(msgBufIn, "uv%s\n", tx13_buffer);
        	   uvdrive.puts(tx13_buffer);
-       	   pc.puts(tx13_buffer);
+       	   pc.puts("%% ");
+       	   pc.puts(msgBufIn);
        }
        	   led4=!led4;
        	   return;
@@ -340,8 +364,24 @@ void cmdProcess()
 	  // DEBUGF("msgBufIn=%s, ao_mv=%d, nValidArgs=%d\n",msgBufIn, ao_mv, nValidArgs);
 	  if (nValidArgs==1)
 	  {
-		  printf("d2a %d received\n", ao_mv);
-		  setAPDBiasVoltage(ao_mv);
+		  // printf("d2a %d received\n", ao_mv);
+		  setAnalogOut_mV(ao_mv);
+	   }
+	  else
+	  {
+		  printf("uncompleted command \"d2a AnalogOutput(mv)\". ignored. \n");
+	  }
+	  return;
+   }
+
+   if (strcmp2(msgBufIn,"apdbv",5)==1)
+   { // swing LED source and collect UV/IR data
+	  nValidArgs=sscanf(msgBufIn, "apdbv %fv\n", &vAPD);
+	  // DEBUGF("msgBufIn=%s, ao_mv=%d, nValidArgs=%d\n",msgBufIn, ao_mv, nValidArgs);
+	  if (nValidArgs==1)
+	  {
+		  // printf("d2a %d received\n", ao_mv);
+		  setAPDBiasVoltage(vAPD);
 	   }
 	  else
 	  {

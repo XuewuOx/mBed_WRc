@@ -14,7 +14,7 @@
 
 
 extern DigitalOut led1;
-extern MODSERIAL pc;
+// extern MODSERIAL pc;
 
 
 // SPI spimax186(p5, p6, p7); // mosi, miso, sclk
@@ -29,7 +29,7 @@ InterruptIn ExIntr_sstrb(p15);
 
 
 
-char adChn; // current A2D channel
+unsigned adChn; // current A2D channel
 unsigned int a2dvalue[MAXSAM][2]; //
 unsigned int maxSamples; // total number of samples per channel to be collected
                          // 0 for continuous unlimited sampling
@@ -173,7 +173,7 @@ void Intr_SSTRB(void)
      a2dtemp=hi<<8;
      a2dtemp=a2dtemp+lo;
      a2dtemp=a2dtemp>>3;
-     a2dvalue[nSamples][(unsigned int)adChn]=a2dtemp;
+     a2dvalue[nSamples][adChn]=a2dtemp;
     // DEBUGF(" adChn=%d, v=%04d\n", adChn,a2dtemp);
      DEBUGF("SSTB nS=%d, ch=%d\n", nSamples, adChn);
      return;
@@ -291,7 +291,7 @@ void readA2D(char chn)
    a2dtemp=hi<<8;
         a2dtemp=a2dtemp+lo;
         a2dtemp=a2dtemp>>3;
-        a2dvalue[nSamples][(unsigned int)adChn+1]=a2dtemp;
+        a2dvalue[nSamples][adChn+1]=a2dtemp;
 
         DEBUGF("a2dvalue[%d][%d,%d] = %d, %d\n", nSamples,
         		adChn,adChn+1,a2dvalue[nSamples][adChn],a2dvalue[nSamples][adChn+1]);

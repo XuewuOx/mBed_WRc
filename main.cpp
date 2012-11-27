@@ -49,6 +49,9 @@ extern int nNow[NUMMOTOR];
 extern float motorSpd[NUMMOTOR]; // steps per second
 extern int statusLEDMotor; // 0 idle, 1 moving, 2 is at the dest, 3 is at the end
 
+
+statusmbed smbed;
+
 void dispCmdInfo();
 
 int main()
@@ -76,17 +79,34 @@ int main()
     // pc.printf("Hello world!\r\n\r\n");
     // mheart = 1;
     
-   dispCmdInfo();
+    dispCmdInfo();
     flipper1.attach(&heartbeat, 1.0); // the address of the function to be attached (flip) and the interval (2 seconds)
+    smbed.APDbv=140;
+    pc.printf("%% set APD bias voltage to %dv", smbed.APDbv);
+    setAPDBiasVoltage(smbed.APDbv); // set APD bias voltage to 140 V
     wait(0.1);
 
-      dispMotorStatus();
-    wait(0.2);
+
+    // dispMotorStatus();
+    // wait(0.2);
     
-    setMotor(MOTORIDLED, 0, 0, 100, FULLSTEP); // for LED
-    setMotor(2, 0, 0, 1, FULLSTEP); // for LED
-    moveMotor2Dest(MOTORIDLED, 20);
-    
+    setMotor(MOTORIDLED, 0, 0, 100, FULLSTEP); // for  LED motor
+    setMotor(2, 0, 0, 1, FULLSTEP); // for APD motor,
+    // LED motor power on test
+    pc.puts("%% LED motor power on test\r\n");
+    moveMotor2Dest(MOTORIDLED, 10);
+	wdt.feed();
+    while(nNow[MOTORIDLED]!=10)
+    {  wait(0.001);
+    }
+    moveMotor2Dest(MOTORIDLED, 0);
+    while(nNow[MOTORIDLED]!=0)
+    {  wait(0.001);
+    }
+	wdt.feed();
+	wait(0.1);
+	dispMotorStatus();
+	pc.puts("%% main loop starts\r\n");
       // int account=0;
     while (1) {
 
@@ -128,9 +148,9 @@ void swingLED(int posA, int posB, int nSam)
 	float kk;
 	float ms0; // motor speed temp
 
-	printf("swing LED from A=%d to B=%d and collect %d UV/IR samples per step\n",posA, posB, nSam);
+	printf("%% swing LED from A=%d to B=%d and collect %d UV/IR samples per step\n",posA, posB, nSam);
 	if (nSam>MAXSAM)
-		{ printf("Too many samples. a2dvalue will overflow. Reset nSam=%d",MAXSAM);
+		{ printf("%% Too many samples. a2dvalue will overflow. Reset nSam=%d",MAXSAM);
 		nSam=MAXSAM;
 		}
 	// move motor one step before the starting position
@@ -229,14 +249,29 @@ void swingLED(int posA, int posB, int nSam)
     return;
 
 }
+void setAPDBiasVoltage(float bvAPD)
+{
+	float k,b, mvAO;
 
-void setAPDBiasVoltage(unsigned int ao_mv)
+	// k=21.0084; b=-12.2590;
+	smbed.APDbv=bvAPD;
+	k=17.0680;
+	 b=517.3162;
+	mvAO=bvAPD*k+b;
+
+	setAnalogOut_mV(mvAO);
+}
+
+void setAnalogOut_mV(float ao_mv)
 {
 	 float per;
-	 int i;
-	 per=(float) ao_mv/3300.0; // 3.3v full range
-	 APDBiasVoltage=per;
-  /*   while(1) {
+
+	 smbed.aomv=ao_mv;
+	 per=ao_mv/3300.0; // 3.3v full range
+	 APDBiasVoltage=per; // set analog output
+	 pc.printf("%% OK analog output=%4.1fmv\n",ao_mv);
+  /*  int i;
+    while(1) {
     	 APDBiasVoltage = APDBiasVoltage + 0.01;
          wait_us(1);
          if(APDBiasVoltage == 1) {
@@ -244,6 +279,16 @@ void setAPDBiasVoltage(unsigned int ao_mv)
          }
      }
  */
+}
+
+void dispmBedStatus()
+{
+	printf("%% mBed status smbed: ");
+	printf("irm=%d, irf=%d, irg=%d (p19)=%1d ",
+			smbed.irm, smbed.irf, smbed.irg, irGainCtr.read());
+	printf("uvm=%d, uvf=%d, uvg=%d (p20)=%1d APDbv=%4.2fv (p18=%4.2fmv) ",
+			smbed.uvm, smbed.uvf, smbed.uvg, uvGainCtr.read(), smbed.APDbv, smbed.aomv);
+	dispMotorStatus();
 }
 
 void dispCmdInfo()
