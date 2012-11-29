@@ -44,5 +44,6 @@ void swingLED(int posA, int posB, int nSam);
 void setAPDBiasVoltage(float bvAPD);
 void setAnalogOut_mV(float ao_mv);
 void dispmBedStatus();
+void memdump( char *base, int n ) ;
 
 #endif /* MAIN_H_ */

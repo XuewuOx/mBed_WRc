@@ -251,12 +251,12 @@ void cmdProcess()
 		   if (gainCtr==1)
 			   { smbed.irg=gainCtr;
 			     irGainCtr=0;
-			     printf("%% OK irg=%d, irGainCtr(p19)=0", gainCtr);
+			     printf("%% OK irg=%d, irGainCtr(p19)=0\n", gainCtr);
 			   }
 		   else if (gainCtr==10)
 			   { smbed.irg=gainCtr;
 			     irGainCtr=1;
-			     printf("%% OK irg=%d, irGainCtr(p19)=1", gainCtr);
+			     printf("%% OK irg=%d, irGainCtr(p19)=1\n", gainCtr);
 			   }
 		   else
 			   DEBUGF("%% IRgain=%d is not supported.\n", gainCtr);
@@ -272,7 +272,7 @@ void cmdProcess()
 	   	    			smbed.irm=k;
 	   	    	}
 	   	    irdrive.puts(tx13_buffer);
-	        pc.puts("% OK");
+	        pc.puts("% OK ");
 	        pc.puts(msgBufIn);
 	      }
 
@@ -290,12 +290,12 @@ void cmdProcess()
 		   nValidArgs=sscanf(msgBufIn, "uvg%d\n", &gainCtr);
 		   if (gainCtr==1)
 			   { uvGainCtr=0;
-			     printf("%% OK uvg=%d, uvGainCtr(p20)=0", gainCtr);
+			     printf("%% OK uvg=%d, uvGainCtr(p20)=0\n", gainCtr);
 			   // DigitalOut uvGainCtr(p20);
 			   }
-		   else if (gainCtr==100)
+		   else if (gainCtr==10)
 			   { uvGainCtr=1;
-			   	 printf("%% OK uvg=%d, uvGainCtr(p20)=1", gainCtr);
+			   	 printf("%% OK uvg=%d, uvGainCtr(p20)=1\n", gainCtr);
 			   }
 		   else
 			   DEBUGF("%% UVgain=%d is not supported.\n", gainCtr);
@@ -304,7 +304,7 @@ void cmdProcess()
 	   else
        {	nValidArgs=sscanf(msgBufIn, "uv%s\n", tx13_buffer);
        	   uvdrive.puts(tx13_buffer);
-       	   pc.puts("%% ");
+       	   pc.puts("% OK ");
        	   pc.puts(msgBufIn);
        }
        	   led4=!led4;
@@ -322,7 +322,7 @@ void cmdProcess()
     { // start continous AD conversion until a2d
         if (nValidArgs==3)
             {
-             DEBUGF("start %d A2D conversion at %dHz. ", nSam,Fs);
+             printf("%% start %d A2D conversion at %dHz. ", nSam,Fs);
              dispTime(); 
              startA2D(Fs,nSam);
              }

@@ -6,12 +6,29 @@
 #include "COMfunc.h"
 #include "stepmotor_ctr.h"
 #include "SPIA2D.h"
+#include    "IAP.h"
 
 #include "main.h"
 #include "wtd.h"
 
  #include "MODSERIAL.h"
 
+
+//----------------- iap flash memory access
+#define     MEM_SIZE        256
+
+#if defined(TARGET_LPC1768)
+#define     TARGET_SECTOR    29     //  use sector 29 as target sector if it is on LPC1768
+#elif defined(TARGET_LPC11U24)
+#define     TARGET_SECTOR    7      //  use sector  7 as target sector if it is on LPC11U24
+#define     TARGET_EEPROM_ADDRESS   64
+#endif
+
+void    memdump( char *p, int n );
+int     isprint( int c );
+
+IAP     iap;
+//-------------------
 // Setup the watchdog timer
 Watchdog wdt;
 
@@ -56,6 +73,10 @@ void dispCmdInfo();
 
 int main()
 {
+
+    char    mem[ MEM_SIZE ];    //  memory, it should be aligned to word boundary
+    int     r;
+
 	Fs=500;
 
     initCOMpc();
@@ -79,6 +100,39 @@ int main()
     // pc.printf("Hello world!\r\n\r\n");
     // mheart = 1;
     
+    //--------------------------------
+    printf( "showing the flash contents...\r\n" );
+    memdump( sector_start_adress[ TARGET_SECTOR ], MEM_SIZE * 3 );
+
+    for (r=0;r<MEM_SIZE; r++)
+    	mem[r]=r;
+
+    //  blank check: The mbed will erase all flash contents after downloading new executable
+
+        r   = iap.blank_check( TARGET_SECTOR, TARGET_SECTOR );
+        printf( "blank check result = 0x%08X\r\n", r );
+
+        //  erase sector, if required
+/*
+        if ( r == SECTOR_NOT_BLANK ) {
+            iap.prepare( TARGET_SECTOR, TARGET_SECTOR );
+            r   = iap.erase( TARGET_SECTOR, TARGET_SECTOR );
+            printf( "erase result       = 0x%08X\r\n", r );
+        }
+
+        // copy RAM to Flash
+*/
+            iap.prepare( TARGET_SECTOR, TARGET_SECTOR );
+            r   = iap.write( mem, sector_start_adress[ TARGET_SECTOR ], MEM_SIZE );
+            printf( "copied: SRAM(0x%08X)->Flash(0x%08X) for %d bytes. (result=0x%08X)\r\n", mem, sector_start_adress[ TARGET_SECTOR ], MEM_SIZE, r );
+
+            // compare
+
+            r   = iap.compare( mem, sector_start_adress[ TARGET_SECTOR ], MEM_SIZE );
+            printf( "compare result     = \"%s\"\r\n", r ? "FAILED" : "OK" );
+    //--------------------------------
+
+
     dispCmdInfo();
     flipper1.attach(&heartbeat, 1.0); // the address of the function to be attached (flip) and the interval (2 seconds)
     smbed.APDbv=140;
@@ -327,6 +381,24 @@ void dispCmdInfo()
 	    pc.printf("\r\n");
 
 
+}
+
+
+void memdump( char *base, int n ) {
+    unsigned char    *p;
+
+    printf( "  memdump from 0x%08X for %d bytes", (unsigned long)base, n );
+
+    p   = (unsigned char *)((unsigned int)base & ~(unsigned int)0x3);
+
+    for ( int i = 0; i < n; i++, p++ ) {
+        if ( !(i % 16) )
+            printf( "\r\n  0x%08X :", (unsigned int)p );
+
+        printf( " %02X", *p );
+    }
+
+    printf( "\r\n" );
 }
 
 #endif
