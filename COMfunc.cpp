@@ -360,7 +360,7 @@ void cmdProcess()
 
    if (strcmp2(msgBufIn,"d2a",3)==1)
    { // swing LED source and collect UV/IR data
-	  nValidArgs=sscanf(msgBufIn, "d2a %d\n", &ao_mv);
+	  nValidArgs=sscanf(msgBufIn, "d2a %dmv\n", &ao_mv);
 	  // DEBUGF("msgBufIn=%s, ao_mv=%d, nValidArgs=%d\n",msgBufIn, ao_mv, nValidArgs);
 	  if (nValidArgs==1)
 	  {

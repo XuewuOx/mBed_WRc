@@ -377,6 +377,8 @@ void dispCmdInfo()
 	    pc.printf("            and start collecting N UV/IR samples at each step (may not at the sampling rate Fs)\n");
 	    pc.printf("            UV/IR data are sent back when motor arrives at position B\n");
 
+	    pc.printf("  (7) apdbv #v<CR>  set the APD's bias voltage to # volts\n");
+	    pc.printf("  (8) d2a #mv<CR>  set the mBed's analog output to # mini-volts\n");
 
 	    pc.printf("\r\n");
 

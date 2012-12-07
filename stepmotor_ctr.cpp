@@ -71,6 +71,7 @@ Ticker tickerMotor[2];
 
 void dispMotorCmdHelp() {
     pc.printf("      setm motorID nOrigin nNow speed fullStep   :set motor's parameters, motorID=1 for LEDmotor, =2 for APDmotor\n");
+    pc.printf("          setm without parameters to display motor status\r\n");
     pc.printf("      move -d|s motorID nStep        : move the motor with motorID \r\n");
     pc.printf("        -d move motor[motorID] to position of nStep \n");
     pc.printf("        -s move motor[motorID] nStep steps. \n");
