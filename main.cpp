@@ -207,6 +207,7 @@ void swingLED(int posA, int posB, int nSam)
 		{ printf("%% Too many samples. a2dvalue will overflow. Reset nSam=%d",MAXSAM);
 		nSam=MAXSAM;
 		}
+
 	// move motor one step before the starting position
 	// Because, at each step, we will move motor one step first followed by collecting data.
 	posA=posA-1;
@@ -238,7 +239,7 @@ void swingLED(int posA, int posB, int nSam)
     	{a2dvalue[i][0]=4998;a2dvalue[i][1]=4999;}
     ADCstatus=0;
     // prefix sequence of data packet
-    pc.printf("%%M posA=%d, nSteps=%d, nSam=%d, Fs=%d\r\n",posA, nSteps, nSam, Fs);
+    pc.printf("%%SWN posA=%d, posB=%d, nSteps=%d, nSam=%d, Fs=%d\r\n",posA+1, posB, nSteps, nSam, Fs);
     /*
     // DEBUG codes for UART communicaiton with host PC/Beagle
     for (int i=0;i<=nSteps;i++)
@@ -259,9 +260,13 @@ void swingLED(int posA, int posB, int nSam)
     return;
     // end of DEBUG codes for UART comm
 */
-	startA2D(Fs,nSam);
-	do{  wait(0.001);	} while(ADCstatus!=2);
-    for (i=0; i<nSteps; i++)
+    // Start moving motor one step followed by a2d conversion
+	// startA2D(Fs,nSam);
+	// do{  wait(0.001);	} while(ADCstatus!=2);
+    pc.printf("%% header format \r\n%% motorStep IR1 UV1 IR2 UV2 IR3 UV3 ... \r\n");
+    pc.printf("%% DATAIRUVBEGIN nRow=%d nCol=%d", nSteps, nSam+1); // one more column for motor step
+
+	for (i=0; i<nSteps; i++)
     {
     	if (dirMotor==0)
     		{break;}
@@ -273,16 +278,20 @@ void swingLED(int posA, int posB, int nSam)
     		{   moveMotornSteps(MOTORIDLED,-1);
     			destTemp=nNow[MOTORIDLED]-1;
     		}
-    	while(nNow[MOTORIDLED]!=destTemp)
+		while(nNow[MOTORIDLED]!=destTemp)
     	{ //  printf(" %d ", nNow[MOTORIDLED]);
     		wait(0.001);
     	}
     	// wait(1);
     	// DEBUGF(" %d-th moveMotor2Dest, OK!\n", i+1);
+    	pc.printf("\r\n%04d ", destTemp);
     	startA2D(Fs,nSam);
     	do{  wait(0.001);	} while(ADCstatus!=2);
+
+
     	// send UV IR data up to host PC via USB-RS232
-    	pc.printf("dir%04d=[",destTemp);
+    	/*
+    	pc.printf("\ndir%04d=[",destTemp);
     	for (int j=0;j<nSam;j++)
     		pc.printf(" %04d",a2dvalue[j][0]); // 0 for IR
     	pc.printf("];\r\n");
@@ -291,13 +300,13 @@ void swingLED(int posA, int posB, int nSam)
     	for (int j=0;j<nSam;j++)
     	    		pc.printf(" %04d",a2dvalue[j][1]);// 1 for UV
     	pc.printf("];\r\n");
-    	wait(0.1);
-
-    	// DEBUGF("%d-th data collection, OK!\n", i+1);
+    	*/
+    	wait(0.01);
+  	// DEBUGF("%d-th data collection, OK!\n", i+1);
     	wdt.feed();
     }
     // terminate sequence of data packet
-    pc.printf("%% nROW=%d nCol=%d DATAIRUVEND\r\n",i,nSam);
+    pc.printf("\r\n%% nROW=%d nCol=%d DATAIRUVEND\r\n",i,nSam);
     // pc.printf("true A2D values\r\n");
     dispMotorStatus();
     return;
@@ -323,7 +332,7 @@ void setAnalogOut_mV(float ao_mv)
 	 smbed.aomv=ao_mv;
 	 per=ao_mv/3300.0; // 3.3v full range
 	 APDBiasVoltage=per; // set analog output
-	 pc.printf("%% OK analog output=%4.1fmv\n",ao_mv);
+	 pc.printf("\n%% OK analog output=%4.1fmv\n",ao_mv);
   /*  int i;
     while(1) {
     	 APDBiasVoltage = APDBiasVoltage + 0.01;

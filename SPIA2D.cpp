@@ -14,7 +14,7 @@
 
 
 extern DigitalOut led1;
-// extern MODSERIAL pc;
+extern MODSERIAL pc;
 
 
 // SPI spimax186(p5, p6, p7); // mosi, miso, sclk
@@ -106,7 +106,7 @@ if (ADCstatus==1)
               // DEBUGF("%d samples done.\n[", nSamples);
 
               // -------------------------
-              /*
+          /*
               // debug codes for print data to USB-RS232
               printf("["); // start with [
               for (i=0;i<maxSamples;)
@@ -118,7 +118,7 @@ if (ADCstatus==1)
         	  	i=i+10;
               }
               printf("]\n"); // end with ]
-              */
+ 	 	 */
               //-----------------------------
 
               // Now wait for main to process the ADCstatus
@@ -156,6 +156,10 @@ if (ADCstatus==1)
 // MAX186 completes data conversion for channel adChn
 // if the conversion of last channel is done
 // then stop conversion and wait for next timerA2D fires
+
+// Intr_SSTRB() works well for 1st channel,
+// but no Intr_SSTRB interrupt is triggered for the following channels
+// Intr_SSTRB() is DISCARDED, use readA2D() alternatively
 void Intr_SSTRB(void)
 { char hi,lo;
   char ctrByte;
@@ -273,7 +277,7 @@ void readA2D(char chn)
      a2dtemp=a2dtemp+lo;
      a2dtemp=a2dtemp>>3;
      a2dvalue[nSamples][(unsigned int)adChn]=a2dtemp;
-
+     pc.printf(" %04d", a2dtemp);
      // Deselect the device
     cs = 1;
 
@@ -292,6 +296,7 @@ void readA2D(char chn)
         a2dtemp=a2dtemp+lo;
         a2dtemp=a2dtemp>>3;
         a2dvalue[nSamples][adChn+1]=a2dtemp;
+        pc.printf(" %04d", a2dtemp);
 
         DEBUGF("a2dvalue[%d][%d,%d] = %d, %d\n", nSamples,
         		adChn,adChn+1,a2dvalue[nSamples][adChn],a2dvalue[nSamples][adChn+1]);
