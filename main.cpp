@@ -262,7 +262,9 @@ void swingLED(int posA, int posB, int nSam)
     // Start moving motor one step followed by a2d conversion
 	// startA2D(Fs,nSam);
 	// do{  wait(0.001);	} while(ADCstatus!=2);
+    wait(0.01);
     pc.printf("%% header format \r\n%% motorStep IR1 UV1 IR2 UV2 IR3 UV3 ... \r\n");
+    wait(0.01);
     pc.printf("%% DATAIRUVBEGIN nRow=%d nCol=%d", nSteps, nSam+1); // one more column for motor step
     wait(0.01);
 	for (i=0; i<nSteps; i++)
