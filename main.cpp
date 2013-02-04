@@ -202,7 +202,8 @@ void swingLED(int posA, int posB, int nSam)
 	float kk;
 	float ms0; // motor speed temp
 
-	printf("%% swing LED from A=%d to B=%d and collect %d UV/IR samples per step\n",posA, posB, nSam);
+	float delayAfterMovingMotor=0.1; // second
+	printf("%% swing LED from A=%d to B=%d and collect %d UV/IR samples per step, %4f sec delay after moving motor \n",posA, posB, nSam, delayAfterMovingMotor);
 	if (nSam>MAXSAM)
 		{ printf("%% Too many samples. a2dvalue will overflow. Reset nSam=%d",MAXSAM);
 		nSam=MAXSAM;
@@ -212,7 +213,7 @@ void swingLED(int posA, int posB, int nSam)
 	posA=posA-1;
     // move from nNow to posA at a fast speed
 	ms0=motorSpd[MOTORIDLED];
-    motorSpd[MOTORIDLED]=100; // 5 steps per second
+    motorSpd[MOTORIDLED]=200; // 5 steps per second
     moveMotor2Dest(MOTORIDLED, posA);
 
     // set wait time for motor achieve posA
@@ -283,7 +284,8 @@ void swingLED(int posA, int posB, int nSam)
     	{ //  printf(" %d ", nNow[MOTORIDLED]);
     		wait(0.0005);
     	}
-    	// wait(1);
+    	wait(delayAfterMovingMotor); // after moving the motor, wait for the signal being stable,
+    	           // due to the transition response of electronic circuits
     	// DEBUGF(" %d-th moveMotor2Dest, OK!\n", i+1);
     	pc.printf("\r\n%04d ", destTemp);
     	startA2D(Fs,nSam);
