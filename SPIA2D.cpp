@@ -30,12 +30,14 @@ InterruptIn ExIntr_sstrb(p15);
 
 
 unsigned adChn; // current A2D channel
-unsigned int a2dvalue[MAXSAM][2]; //
+
+unsigned int a2dvalue[MAXSAM][2];
+
 unsigned int maxSamples; // total number of samples per channel to be collected
                          // 0 for continuous unlimited sampling
 unsigned int nSamples; // how many samples have been collected
 
-unsigned int Fs; // sampling rate
+unsigned int Fs; // sampling rate, global variable
 
 char ADCstatus; // 0 for idle,
                 // 1 for coversion in progress,
@@ -75,7 +77,7 @@ if (ADCstatus==0||ADCstatus==2)
     ADCstatus=1; // dac conversion is in progress
     // timerA2D.attach(&Intr_timerA2D,0.002);
     timerA2D.attach(&Intr_timerA2D,(float)1/Fs);
-    // DEBUGF("\n   timerA2D.attached ok, (ADCstatus=%d,%d samples at %d Hz (%fs))\n",ADCstatus, nSamplesRequired,Fs, (float) 1/Fs);
+    DEBUGF("\n   timerA2D.attached ok, (ADCstatus=%d,%d samples at %d Hz (%fs))\n",ADCstatus, nSamplesRequired,Fs, (float) 1/Fs);
     }
 else
     DEBUGF("Wrong ADCstatus=%d when invoking startA2D\n",ADCstatus);
@@ -177,7 +179,11 @@ void Intr_SSTRB(void)
      a2dtemp=hi<<8;
      a2dtemp=a2dtemp+lo;
      a2dtemp=a2dtemp>>3;
-     a2dvalue[nSamples][adChn]=a2dtemp;
+
+     // All A/D data is sent out via USB/RS232.  Only store latest one A/D sample locally at mBed.
+     //  a2dvalue[nSamples][adChn]=a2dtemp; // commented to avoid overflow
+     a2dvalue[1][adChn]=a2dtemp; // only store latest one A/D sample
+
     // DEBUGF(" adChn=%d, v=%04d\n", adChn,a2dtemp);
      DEBUGF("SSTB nS=%d, ch=%d\n", nSamples, adChn);
      return;
@@ -276,7 +282,13 @@ void readA2D(char chn)
      a2dtemp=hi<<8;
      a2dtemp=a2dtemp+lo;
      a2dtemp=a2dtemp>>3;
-     a2dvalue[nSamples][(unsigned int)adChn]=a2dtemp;
+
+     // All A/D data is sent out via USB/RS232.  Only store latest one A/D sample locally at mBed.
+     // a2dvalue[nSamples][(unsigned int)adChn]=a2dtemp; // commented to avoid overflow
+     a2dvalue[0][(unsigned int)adChn]=a2dtemp; // only store latest one A/D sample
+
+      // commented to avoid a2dvalue overflow
+
      pc.printf(" %04d", a2dtemp);
      // Deselect the device
     cs = 1;
@@ -295,11 +307,15 @@ void readA2D(char chn)
    a2dtemp=hi<<8;
         a2dtemp=a2dtemp+lo;
         a2dtemp=a2dtemp>>3;
-        a2dvalue[nSamples][adChn+1]=a2dtemp;
+
+        // All A/D data is sent out via USB/RS232.  Only store latest one A/D sample locally at mBed.
+        // a2dvalue[nSamples][adChn+1]=a2dtemp; // commented to avoid a2dvalue overflow
+        a2dvalue[0][adChn+1]=a2dtemp; // only store latest one A/D sample
+
         pc.printf(" %04d", a2dtemp);
 
         DEBUGF("a2dvalue[%d][%d,%d] = %d, %d\n", nSamples,
-        		adChn,adChn+1,a2dvalue[nSamples][adChn],a2dvalue[nSamples][adChn+1]);
+        		adChn,adChn+1,a2dvalue[0][adChn],a2dvalue[0][adChn+1]);
         //   return a2dvalue;
  }
 

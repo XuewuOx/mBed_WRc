@@ -13,6 +13,8 @@
 #define SPIA2D_H_
 
 #define maxChnID 1
+ // MAXSAM and a2dvalue are discarded to remove limitation of maxum number of samples
+// All data is sent out via USB/RS232 immediately. Only store latest one sample locally at mBed
 #define MAXSAM 2000
 
 void Init_SPIMAX186(void);

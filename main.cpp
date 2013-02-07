@@ -59,7 +59,8 @@ extern char ADCstatus; // 0 for idle,
                 // 1 for coversion in progress,
                 // 2 for maxSamples has been collected
                 // 3  for continuous sampling
-extern unsigned int a2dvalue[][2];
+
+// extern unsigned int a2dvalue[][2]; // a2dvalue is discarded to remove limitation of maxum number of samples
 
 
 extern int nNow[NUMMOTOR];
@@ -202,12 +203,18 @@ void swingLED(int posA, int posB, int nSam)
 	float kk;
 	float ms0; // motor speed temp
 
-	float delayAfterMovingMotor=0.1; // second
+	float delayAfterMovingMotor=0.2; // second
 	printf("%% swing LED from A=%d to B=%d and collect %d UV/IR samples per step, %4f sec delay after moving motor \n",posA, posB, nSam, delayAfterMovingMotor);
-	if (nSam>MAXSAM)
-		{ printf("%% Too many samples. a2dvalue will overflow. Reset nSam=%d",MAXSAM);
-		nSam=MAXSAM;
-		}
+
+	// a2dvalue is discarded to remove limitation of maximum number of samples
+	// All A/D data is sent out via USB/RS232. Never store A/D data locally at mBed.
+	// commented to avoid a2dvalue overflow
+/*	 if (nSam>MAXSAM)
+*		{ printf("%% Too many samples. a2dvalue will overflow. Reset nSam=%d",MAXSAM);
+*		nSam=MAXSAM;
+*		}
+*/
+
 	// move motor one step before the starting position
 	// Because, at each step, we will move motor one step first followed by collecting data.
 	posA=posA-1;
@@ -235,8 +242,7 @@ void swingLED(int posA, int posB, int nSam)
 
     dirMotor=posB-posA;
     nSteps=abs(dirMotor);
-    for (i=0;i<MAXSAM;i++)
-    	{a2dvalue[i][0]=4998;a2dvalue[i][1]=4999;}
+
     ADCstatus=0;
     // prefix sequence of data packet
     pc.printf("%%SWN posA=%d, posB=%d, nSteps=%d, nSam=%d, Fs=%d\r\n",posA+1, posB, nSteps, nSam, Fs);
