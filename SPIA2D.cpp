@@ -70,10 +70,21 @@ if (ADCstatus==0||ADCstatus==2)
    {
    // DEBUGF("...ADCstatus==0");
      // ExIntr_sstrb.rise(&Intr_SSTRB); // comment for polling SSTRB, rather using interrupt
-     adChn=0;
+    adChn=0;
     nSamples=0;
-    maxSamples=nSamplesRequired;
+
+    DEBUGF("nSamplesRequired=%d", nSamplesRequired);
+    if(nSamplesRequired==0)
+    { //require 0 samples, set the sampling frequency only
+    	Fs=xFs;
+    	printf("%% Set sampling frequency to %d Hz.\r\n ", Fs);
+    	return;
+    }
+
+    printf("%% start %d A2D conversion at %dHz. ", nSamplesRequired,xFs);
+
     Fs=xFs;
+    maxSamples=nSamplesRequired;
     ADCstatus=1; // dac conversion is in progress
     // timerA2D.attach(&Intr_timerA2D,0.002);
     timerA2D.attach(&Intr_timerA2D,(float)1/Fs);

@@ -322,8 +322,7 @@ void cmdProcess()
     { // start continous AD conversion until a2d
         if (nValidArgs==3)
             {
-             printf("%% start %d A2D conversion at %dHz. ", nSam,Fs);
-             dispTime(); 
+        	 // printf("nSam=%d, OK\r\n",nSam);
              startA2D(Fs,nSam);
              }
         else

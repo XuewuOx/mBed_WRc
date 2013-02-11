@@ -137,7 +137,7 @@ int main()
     dispCmdInfo();
     flipper1.attach(&heartbeat, 1.0); // the address of the function to be attached (flip) and the interval (2 seconds)
     smbed.APDbv=140;
-    pc.printf("%% set APD bias voltage to %dv", smbed.APDbv);
+    pc.printf("\% set APD bias voltage to %3.2f v", smbed.APDbv);
     setAPDBiasVoltage(smbed.APDbv); // set APD bias voltage to 140 V
     wait(0.1);
 
@@ -225,7 +225,7 @@ void swingLED(int posA, int posB, int nSam)
 
     // set wait time for motor achieve posA
     nSteps=abs(posA-nNow[MOTORIDLED]);
-    kk=(float) nSteps/motorSpd[MOTORIDLED]+2;  // steps per second
+    kk=(float) nSteps/motorSpd[MOTORIDLED]+10;  // steps per second
     if (kk>10.0)
     	wdt.kick(kk);
     // DEBUGF("wdt=%f s",kk);
@@ -235,7 +235,7 @@ void swingLED(int posA, int posB, int nSam)
     }
     // wait(1);
     // restor wait time and motor speed
-    if (kk<10.0) wdt.kick(10.0);
+    wdt.kick(10.0);
     motorSpd[MOTORIDLED]=ms0; // restore the original value of motor speed
     // DEBUGF("\n, posA OK!\n");
     dispMotorStatus();
@@ -274,6 +274,8 @@ void swingLED(int posA, int posB, int nSam)
     wait(0.01);
     pc.printf("%% DATAIRUVBEGIN nRow=%d nCol=%d", nSteps, nSam+1); // one more column for motor step
     wait(0.01);
+    kk=(float) nSam/Fs+2;  // setup new dogfeeding interval
+    if (kk>10.0) wdt.kick(kk);
 	for (i=0; i<nSteps; i++)
     {
     	if (dirMotor==0)
@@ -314,6 +316,7 @@ void swingLED(int posA, int posB, int nSam)
   	// DEBUGF("%d-th data collection, OK!\n", i+1);
     	wdt.feed();
     }
+	wdt.kick(10.0); // restore default value of dog feeding interval
     // terminate sequence of data packet
     pc.printf("\r\n%% nROW=%d nCol=%d DATAIRUVEND\r\n",i,nSam+1);
     // pc.printf("true A2D values\r\n");
