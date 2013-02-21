@@ -6,6 +6,7 @@
 #include "COMfunc.h"
 #include "stepmotor_ctr.h"
 #include "SPIA2D.h"
+#include "SPITemp420.h"
 #include    "IAP.h"
 
 #include "main.h"
@@ -25,7 +26,7 @@
 #endif
 
 void    memdump( char *p, int n );
-int     isprint( int c );
+
 
 IAP     iap;
 //-------------------
@@ -69,99 +70,21 @@ extern int statusLEDMotor; // 0 idle, 1 moving, 2 is at the dest, 3 is at the en
 
 
 statusmbed smbed;
+float tempDegC; // temperature value (degree)
+
 
 void dispCmdInfo();
 
 int main()
 {
-
-    char    mem[ MEM_SIZE ];    //  memory, it should be aligned to word boundary
-    int     r;
-
-	Fs=500;
-
-    initCOMpc();
-//    printf("INICOM...OK\n");
-// On reset, indicate a watchdog reset or a pushbutton reset on LED 4 or 3
-    if ((LPC_WDT->WDMOD >> 2) & 1)
-        { led2 = 0.1; DEBUGF("\n\n!!--- WTD reset (LED2=0.1) ---!!\n");}
-    else 
-        { led1 = 1; DEBUGF("\n\n----- Power on reset (LED1=1) -----\n");}
-    printf(" Compiled on %s at %s (Xuewu Daniel Dai)\n", __DATE__, __TIME__);
-    //    setTime(2012, 5, 6, 16, 11, 00);
-    dispTime();
-// setup a 10 second timeout on watchdog timer hardware
-// needs to be longer than worst case main loop exection time
-    wdt.kick(10.0);  
+    // setup a 10 second timeout on watchdog timer hardware
+    // needs to be longer than worst case main loop exection time
+    wdt.kick(10.0);
     printf("Start watch dog (feed interval < 10 s)... OK\n");
-    
-    Init_SPIMAX186();
-    // wait(0.1);
-    // DEBUGF("Hello world! by printf bug\r\n");
-    // pc.printf("Hello world!\r\n\r\n");
-    // mheart = 1;
-    
-    //--------------------------------
-    printf( "showing the flash contents...\r\n" );
-    memdump( sector_start_adress[ TARGET_SECTOR ], MEM_SIZE * 3 );
 
-    for (r=0;r<MEM_SIZE; r++)
-    	mem[r]=r;
+	Initialize_main();
 
-    //  blank check: The mbed will erase all flash contents after downloading new executable
-
-        r   = iap.blank_check( TARGET_SECTOR, TARGET_SECTOR );
-        printf( "blank check result = 0x%08X\r\n", r );
-
-        //  erase sector, if required
-/*
-        if ( r == SECTOR_NOT_BLANK ) {
-            iap.prepare( TARGET_SECTOR, TARGET_SECTOR );
-            r   = iap.erase( TARGET_SECTOR, TARGET_SECTOR );
-            printf( "erase result       = 0x%08X\r\n", r );
-        }
-
-        // copy RAM to Flash
-*/
-            iap.prepare( TARGET_SECTOR, TARGET_SECTOR );
-            r   = iap.write( mem, sector_start_adress[ TARGET_SECTOR ], MEM_SIZE );
-            printf( "copied: SRAM(0x%08X)->Flash(0x%08X) for %d bytes. (result=0x%08X)\r\n", mem, sector_start_adress[ TARGET_SECTOR ], MEM_SIZE, r );
-
-            // compare
-
-            r   = iap.compare( mem, sector_start_adress[ TARGET_SECTOR ], MEM_SIZE );
-            printf( "compare result     = \"%s\"\r\n", r ? "FAILED" : "OK" );
-    //--------------------------------
-
-
-    dispCmdInfo();
-    flipper1.attach(&heartbeat, 1.0); // the address of the function to be attached (flip) and the interval (2 seconds)
-    smbed.APDbv=140;
-    pc.printf("\% set APD bias voltage to %3.2f v", smbed.APDbv);
-    setAPDBiasVoltage(smbed.APDbv); // set APD bias voltage to 140 V
-    wait(0.1);
-
-
-    // dispMotorStatus();
-    // wait(0.2);
-    
-    setMotor(MOTORIDLED, 0, 0, 100, FULLSTEP); // for  LED motor
-    setMotor(2, 0, 0, 1, FULLSTEP); // for APD motor,
-    // LED motor power on test
-    pc.puts("%% LED motor power on test\r\n");
-    moveMotor2Dest(MOTORIDLED, 10);
-	wdt.feed();
-    while(nNow[MOTORIDLED]!=10)
-    {  wait(0.001);
-    }
-    moveMotor2Dest(MOTORIDLED, 0);
-    while(nNow[MOTORIDLED]!=0)
-    {  wait(0.001);
-    }
-	wdt.feed();
-	wait(0.1);
-	dispMotorStatus();
-	pc.puts("%% main loop starts\r\n");
+	pc.puts("% main loop starts\r\n");
       // int account=0;
     while (1) {
 
@@ -172,7 +95,7 @@ int main()
          cmdProcess();
          endofcmd=-1;
         }
-        
+
         if (ADCstatus==2)
         { // required number of samples have been collected
            ADCstatus=0; // set 3 for continusou sampling,
@@ -193,10 +116,152 @@ int main()
           //  if (account>=1000)
           //  {while(1);
         }
-        
+
        }// end of while(1)
 } // end of main
 
+//============================================================
+/** Initialize mBed
+ *
+ *  @param	  NONE
+ *  @return     1   success
+ *  		   -1	failure
+ *  Remark:
+ */
+int Initialize_main()
+{
+
+
+
+    initCOMpc();
+    // DEBUGF("INICOM...OK\n");
+    // On reset, indicate a watchdog reset or a pushbutton reset on LED 4 or 3
+    if ((LPC_WDT->WDMOD >> 2) & 1)
+        { led2 = 0.1; DEBUGF("\n\n!!--- WTD reset (LED2=0.1) ---!!\n");}
+    else 
+        { led1 = 1; DEBUGF("\n\n----- Power on reset (LED1=1) -----\n");}
+    printf(" Compiled on %s at %s (Xuewu Daniel Dai)\n", __DATE__, __TIME__);
+    //setTime(2012, 5, 6, 16, 11, 00);
+    dispTime();
+
+    Init_SPIMAX186();
+    Init_SPITemp420();
+    // startReadingTemp(1.1);
+    // printf("Start continuous temperature readings at 1.1 reading per second\n");
+    testFlashMem();
+
+    dispCmdInfo();
+    flipper1.attach(&heartbeat, 1.0); // the address of the function to be attached (flip) and the interval (2 seconds)
+    smbed.APDbv=140;
+    pc.printf("%% set APD bias voltage to %3.2f v", smbed.APDbv);
+    setAPDBiasVoltage(smbed.APDbv); // set APD bias voltage to 140 V
+    wait(0.1);
+
+    // dispMotorStatus();
+    // wait(0.2);
+    
+    setMotor(MOTORIDLED, 0, 0, 100, FULLSTEP); // for  LED motor
+    setMotor(2, 0, 0, 1, FULLSTEP); // for APD motor,
+    // LED motor power on test
+    pc.puts("% LED motor power on test\r\n");
+    moveMotor2Dest(MOTORIDLED, 10);
+	wdt.feed();
+    while(nNow[MOTORIDLED]!=10)
+    {  wait(0.001);
+    }
+    moveMotor2Dest(MOTORIDLED, 0);
+    while(nNow[MOTORIDLED]!=0)
+    {  wait(0.001);
+    }
+	wdt.feed();
+	wait(0.1);
+	dispMotorStatus();
+
+	Fs=500;
+
+
+}
+
+
+
+
+void testFlashMem()
+{
+    char  mem[ MEM_SIZE ];    //  memory, it should be aligned to word boundary
+    int     r;
+    //--------------------------------
+    printf( "Flash contents before write ...\r\n" );
+    memdump( sector_start_adress[ TARGET_SECTOR ], MEM_SIZE);
+
+    //  blank check: The mbed will erase all flash contents after downloading new executable
+
+        r   = iap.blank_check( TARGET_SECTOR, TARGET_SECTOR );
+        printf( "blank check result = 0x%08X, \" %s \" \r\n", r, r ? "FAILED" : "OK");
+        printf( "-------------------------------------------------\r\n");
+        //  erase sector, if required
+/*
+        if ( r == SECTOR_NOT_BLANK ) {
+            iap.prepare( TARGET_SECTOR, TARGET_SECTOR );
+            r   = iap.erase( TARGET_SECTOR, TARGET_SECTOR );
+            printf( "erase result       = 0x%08X\r\n", r );
+        }
+
+        // copy RAM to Flash
+*/
+        smbed.irm=25; // magnitude
+        smbed.irf=254; // frequency
+        smbed.irg=1; // gain
+        smbed.uvm=0;
+        smbed.uvf=515;
+        smbed.uvg=1;
+        smbed.APDbv=141.0; // bias voltage of APD (v), 4B
+        smbed.aomv=1515870810; // analog output voltage (mv), 4B, 5A5A5A5A
+        smbed.nNow[0]=0x00000000; smbed.nNow[1]=0x00000001;smbed.nNow[2]=0x00000002;
+        smbed.tempValue=0xA5A5A5A5;
+        printf("aomv=0x%08X\r\n", smbed.aomv);
+        for (r=0;r<sizeof(smbed.mempad);r++) smbed.mempad[r]=r;
+
+            iap.prepare( TARGET_SECTOR, TARGET_SECTOR );
+            // r   = iap.write( mem, sector_start_adress[ TARGET_SECTOR ], MEM_SIZE );
+            // printf( "\r\n Copied: SRAM(0x%08X)->Flash(0x%08X) for %d bytes. (result=0x%08X)\r\n", mem, sector_start_adress[ TARGET_SECTOR ], MEM_SIZE, r );
+            //            printf( "Flash contents after write mem[]=[0, 1, ...%d] \r\n", MEM_SIZE-1);
+            //            memdump( sector_start_adress[ TARGET_SECTOR ], MEM_SIZE);
+            r   = iap.write( (char*) &smbed, sector_start_adress[ TARGET_SECTOR ], sizeof(statusmbed) );
+
+            printf( "\r\n Write smbed.nNow=[0x%08X, 0x%08X, 0x%08X] ->Flash for %d bytes. (result=0x%X), \"%s\" \r\n",
+            		smbed.nNow[0],smbed.nNow[1],smbed.nNow[2], sizeof(statusmbed), r, r?"FAILED":"CMD_SUCCESS");
+
+            printf( "Flash contents after write smbed \r\n");
+            memdump( sector_start_adress[ TARGET_SECTOR ], sizeof(statusmbed));
+            printf( "-------------------------------------------------\r\n");
+wait(1);
+     //       smbed.nNow[1]=7;
+     //       for (r=0;r<sizeof(smbed.mempad);r++) smbed.mempad[r]=r+16;
+
+            printf( "update smbed.nNow[1]=0x%08X, smbed.mempad[0]=0x%02X \r\n", smbed.nNow[1], smbed.mempad[0]);
+
+            iap.prepare( TARGET_SECTOR, TARGET_SECTOR );
+            r   = iap.write( (char*) &smbed, sector_start_adress[ TARGET_SECTOR ], sizeof(statusmbed) );
+            printf( "Write new smbed to flash (result=0x%X), \"%s\" \r\n ", r, r?"FAILED":"CMD_SUCCESS" );
+            printf( "Flash contents after write new smbed.nNow[1]");
+            memdump( sector_start_adress[ TARGET_SECTOR ], sizeof(statusmbed));
+            printf( "-------------------------------------------------\r\n");
+
+            // compare
+            r   = iap.compare( (char*) &smbed, sector_start_adress[ TARGET_SECTOR ], sizeof(statusmbed));
+            printf( "compare result     = \"%s\"\r\n", r ? "FAILED" : "OK" );
+
+    //--------------------------------
+}
+
+/** swing(scan) LED source to find IR/UV's peak position
+ *
+ *  @param    posA    Begin position for scanning.
+ *  @param    posB    End position for scanning
+ *  @param    nSam    Number of samples per step
+ *  @return   NONE
+ *  Remark:
+ */
 void swingLED(int posA, int posB, int nSam)
 { 	int nSteps, dirMotor;
 	int i,destTemp;
@@ -324,6 +389,8 @@ void swingLED(int posA, int posB, int nSam)
     return;
 
 }
+
+
 void setAPDBiasVoltage(float bvAPD)
 {
 	float k,b, mvAO;
