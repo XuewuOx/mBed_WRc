@@ -81,8 +81,7 @@ if (ADCstatus==0||ADCstatus==2)
     	return;
     }
 
-    printf("%% start %d A2D conversion at %dHz. ", nSamplesRequired,xFs);
-
+    // DEBUGF("%% start %d A2D conversion at %dHz. ", nSamplesRequired,xFs);
     Fs=xFs;
     maxSamples=nSamplesRequired;
     ADCstatus=1; // dac conversion is in progress
