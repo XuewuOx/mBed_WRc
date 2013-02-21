@@ -4,6 +4,7 @@
 #include "main.h"
 #include "MODSERIAL.h"
 #include "SPIA2D.h"
+#include "SPITemp420.h"
 #include "RTCfunc.h"
 
 #include "stepmotor_ctr.h"
@@ -238,6 +239,7 @@ void cmdProcess()
 
     setMotor(motorID, nOri, nNow, spd, fullstep);
     dispMotorStatus();
+
      return;
   }
   // IR command
@@ -388,6 +390,15 @@ void cmdProcess()
 	  }
 	  return;
    }
+
+   if (strcmp2(msgBufIn,"rdtemp",6)==1)
+      {
+	   double tDegC;
+	   tDegC=readTemp();
+	   printf("%% temperature=%7.4f\r\n",tDegC);
+	   return;
+      }
+
   // not a pre-defined command, ignored.
   DEBUGF("Un-recognised command, ignored. \n");
 }
