@@ -27,6 +27,7 @@ extern MODSERIAL pc;
 extern DigitalOut led4;
 extern DigitalOut led1;
 
+extern statusmbed smbed;
 
 /* -------------
 * variable definition
@@ -116,6 +117,8 @@ void setMotor(int motorID, int nO, int nN, float spd, int fullstep) {
         *pENB[k]=0;
         *pDIR[k]=0;
         *pSTP[k]=fullStep[motorID];
+        smbed.nNow[motorID]=nNow[motorID];
+
         return;
     }
     else {
