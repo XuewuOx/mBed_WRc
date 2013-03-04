@@ -399,6 +399,23 @@ void cmdProcess()
 	   return;
       }
 
+   if (strcmp2(msgBufIn,"set420",6)==1)
+      {
+	   float outputmA;
+	   nValidArgs=sscanf(msgBufIn, "set420 %f\n", &outputmA);
+	   	  // DEBUGF("msgBufIn=%s, ao_mv=%d, nValidArgs=%d\n",msgBufIn, ao_mv, nValidArgs);
+	   	  if (nValidArgs==1)
+	   	  {
+	   		set420mAOutput(outputmA, 1);
+	   	   }
+	   	  else
+	   	  {
+	   		  printf("uncompleted command \"d2a AnalogOutput(mv)\". ignored. \n");
+	   	  }
+		  return;
+      }
+
+
   // not a pre-defined command, ignored.
   DEBUGF("Un-recognised command, ignored. \n");
 }

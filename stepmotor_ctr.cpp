@@ -145,7 +145,6 @@ void moveMotor2Dest(int motorID, int dest) {
     k=motorID-1;
     if ((k==0)||(k==1))
     { // LED or APD motor
-
         if (*pENB[k]==1) { // motorLEd is moving, have to wait until it stops
             printf("motor[%d] is moving. move cmd is ignored\n", k+1);
             return;
@@ -199,7 +198,7 @@ void clkMotorLED() {
 	if (uSW==1 && *pDIR[0]==0)
 #endif
 	{ // LED motor has been at the end of the rail. No further movement
-    	DEBUGF("LED motor[1] has been at the end of the rail. Stop");
+    	printf("LED motor[1] has been at the end of the rail. \r\n");
 
         tickerMotor[0].detach();
         *pENB[0]=0;

@@ -19,8 +19,10 @@
 
 SPI spitemp420(p5,p6,p7);
 DigitalOut cstemp(p17);
-DigitalOut cs420(p8);
+DigitalOut cs420A(p8); // CS for 1st 4-20mA output
+DigitalOut cs420B(p16); // CS for 2nd 4-20mA output
 
+// DigitalOut clck(p7);
 
 Ticker timerRdTemp;
 
@@ -34,10 +36,11 @@ void Init_SPITemp420()
 
     // Setup the spi for 8 bit data, high steady state clock,
     // second edge capture, with a 1MHz clock rate
-    spitemp420.format(8,3);
-    spitemp420.frequency(10000);
+    spitemp420.format(8,0);
+    spitemp420.frequency(5000);
     // deSelect the device by setting chip select high
-    cs420 = 1;
+    cs420A=1;
+    cs420B=1;
     cstemp=1;
 
     // Initialize ADT7310
@@ -52,13 +55,82 @@ void Init_SPITemp420()
    // spitemp420.write(cmdByte);
     cstemp=1;
 
+     // Initialize AD420
+/*  4-20mA test codes
+*/
 
-    // Initialize AD420
-
-
-
+/*
+ while(1)
+{
+//	readTemp();
+//	wait_ms(10);
+	// set420mAOutput(4.000488, 1);
+	set420mAOutput(4.000488, 1);
+	// set420mAOutput(8, 2);
+	wait_ms(25);
+	set420mAOutput(8.000488, 1);
+	wait_ms(25);
+	set420mAOutput(10.000, 1);
+	wait_ms(25);
+	set420mAOutput(14.000, 1);
+	wait_ms(25);
+	set420mAOutput(18.000, 1);
+	wait_ms(25);
+	set420mAOutput(19.000, 1);
+	wait_ms(75);
+}
+*/
     printf("Init SPI temperature sensor & AD420...OK\n");
 }
+
+
+/** Set 4-20mA output
+ *
+ *  @param curr		current to be set in mA
+ *  @param chID		1 for first 4-20mA output channel, 2 for 2nd channel
+ *
+ */
+int set420mAOutput(float curr, int chID)
+{
+	unsigned currCode;
+	char currHi, currLo;
+
+	if (curr<=4)
+		currCode=0;
+	else if (curr>=20)
+		currCode=0xFFFF;
+	else
+		currCode=round((curr-4)/0.000244140625);
+	currLo=currCode&0x00FF;
+	currHi=currCode>>8;
+
+	// currLo=currLo^0xFF;
+	// currHi=currHi^0xFF;
+	printf("Set %9.6f mA to %d-th channel, Hi=0x%02X, Lo=0x%02X\r\n", curr, chID, currHi, currLo);
+	if (chID==1)
+	{
+		cs420A=0;
+		spitemp420.write(currHi);
+		spitemp420.write(currLo);
+		wait_us(200);
+		cs420A=1;
+		return 1;
+	}
+	else if (chID==2)
+	{
+		cs420B=0;
+		spitemp420.write(currHi);
+		spitemp420.write(currLo);
+		wait_us(200);
+		cs420B=1;
+		return 2;
+	}
+	else
+	{   printf("Wrong 4-20mA channel ID that should be in {1, 2}\r\n");
+		return -1;
+	}
+}
+
 
 /** Read temperature once in single read mode
  *
@@ -83,7 +155,7 @@ float readTemp()
     tempReg16=tempReg16&0xFFF8;
     tempValue=tempReg16;
     tempValue=tempValue/128.0;
-    // DEBUGF("temperature=%8.4f, Hi=0x%02X Lo=0x%02X, Reg16=0x%04X\n", tempValue, tempHi,tempLo, tempReg16);
+    printf("temperature=%8.4f, Hi=0x%02X Lo=0x%02X, Reg16=0x%04X\n", tempValue, tempHi,tempLo, tempReg16);
     return tempValue;
 }
 
@@ -95,12 +167,13 @@ void Intr_timerTemp(void)
 
 /** Start continuous temperature reading at a fixed interval.
  *
- *  @param rdInterval_s the interval in second between two readings
+ *  @param rdInterval-_s the interval in second between two readings
  *
  */
 void startReadingTemp(float rdInterval_s)
 {
     timerRdTemp.attach(&Intr_timerTemp,rdInterval_s);
 }
+
 
 

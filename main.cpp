@@ -83,8 +83,8 @@ int main()
     printf("Start watch dog (feed interval < 10 s)... OK\n");
 
 	Initialize_main();
-
-	pc.puts("% main loop starts\r\n");
+wait(1);
+	pc.printf("% main loop starts\r\n");
       // int account=0;
     while (1) {
 
@@ -130,9 +130,6 @@ int main()
  */
 int Initialize_main()
 {
-
-
-
     initCOMpc();
     // DEBUGF("INICOM...OK\n");
     // On reset, indicate a watchdog reset or a pushbutton reset on LED 4 or 3
@@ -160,21 +157,29 @@ int Initialize_main()
     // dispMotorStatus();
     // wait(0.2);
     
-    setMotor(MOTORIDLED, 0, 0, 100, FULLSTEP); // for  LED motor
+    setMotor(MOTORIDLED, 0, 0, 200, FULLSTEP); // for  LED motor
     setMotor(2, 0, 0, 1, FULLSTEP); // for APD motor,
+    // dispMotorStatus();
+    wait(0.1);
     // LED motor power on test
-    pc.puts("% LED motor power on test\r\n");
-    moveMotor2Dest(MOTORIDLED, 10);
+    printf("%% LED motor power on test\r\n");
+    moveMotor2Dest(MOTORIDLED, 100);
 	wdt.feed();
-    while(nNow[MOTORIDLED]!=10)
+    while(nNow[MOTORIDLED]!=100)
     {  wait(0.001);
     }
+    wait(0.2);
     moveMotor2Dest(MOTORIDLED, 0);
-    while(nNow[MOTORIDLED]!=0)
-    {  wait(0.001);
+    while(nNow[MOTORIDLED]!=0 )
+    {  	wait(0.001);
+     	if (statusLEDMotor==3) // stops when arrives at uSwitch, although not arrives at the dest
+    	   {printf("Motor stops when uSwitch is trigerred.\r\n");
+     		break;
+    	   }
     }
 	wdt.feed();
-	wait(0.1);
+	wait(0.2);
+
 	dispMotorStatus();
 
 	Fs=500;
@@ -400,7 +405,6 @@ void setAPDBiasVoltage(float bvAPD)
 	k=17.0680;
 	 b=517.3162;
 	mvAO=bvAPD*k+b;
-
 	setAnalogOut_mV(mvAO);
 }
 

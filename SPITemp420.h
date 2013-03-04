@@ -17,6 +17,6 @@
 void Init_SPITemp420();
 float readTemp();
 void startReadingTemp(float rdInterval_s);
-
+int set420mAOutput(float curr, int chID);
 
 #endif /* SPITEMP420_H_ */
