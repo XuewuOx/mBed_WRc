@@ -167,6 +167,10 @@ int Initialize_main()
 	wdt.feed();
     while(nNow[MOTORIDLED]!=100)
     {  wait(0.001);
+ 		if (statusLEDMotor==3) // stops when arrives at uSwitch, although not arrives at the dest
+	   {printf("Motor stops when uSwitch is triggered.\r\n");
+ 		break;
+	   }
     }
     wait(0.2);
     moveMotor2Dest(MOTORIDLED, 0);
