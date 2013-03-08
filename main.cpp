@@ -173,7 +173,7 @@ int Initialize_main()
     while(nNow[MOTORIDLED]!=0 )
     {  	wait(0.001);
      	if (statusLEDMotor==3) // stops when arrives at uSwitch, although not arrives at the dest
-    	   {printf("Motor stops when uSwitch is trigerred.\r\n");
+    	   {printf("Motor stops when uSwitch is triggered.\r\n");
      		break;
     	   }
     }
@@ -183,7 +183,7 @@ int Initialize_main()
 	dispMotorStatus();
 
 	Fs=500;
-
+	return EXIT_SUCCESS;
 
 }
 
@@ -192,8 +192,8 @@ int Initialize_main()
 
 void testFlashMem()
 {
-    char  mem[ MEM_SIZE ];    //  memory, it should be aligned to word boundary
-    int     r;
+    // char  mem[ MEM_SIZE ];    //  memory, it should be aligned to word boundary
+    unsigned int     r;
     //--------------------------------
     printf( "Flash contents before write ...\r\n" );
     memdump( sector_start_adress[ TARGET_SECTOR ], MEM_SIZE);
@@ -432,7 +432,7 @@ void dispmBedStatus()
 	printf("%% mBed status smbed: ");
 	printf("irm=%d, irf=%d, irg=%d (p19)=%1d ",
 			smbed.irm, smbed.irf, smbed.irg, irGainCtr.read());
-	printf("uvm=%d, uvf=%d, uvg=%d (p20)=%1d APDbv=%4.2fv (p18=%4.2fmv) ",
+	printf("uvm=%d, uvf=%d, uvg=%d (p20)=%1d APDbv=%4.2fv (p18=%dmv) ",
 			smbed.uvm, smbed.uvf, smbed.uvg, uvGainCtr.read(), smbed.APDbv, smbed.aomv);
 	dispMotorStatus();
 }
@@ -481,7 +481,7 @@ void dispCmdInfo()
 void memdump( char *base, int n ) {
     unsigned char    *p;
 
-    printf( "  memdump from 0x%08X for %d bytes", (unsigned long)base, n );
+    printf( "  memdump from 0x%08X for %d bytes", (unsigned int)base, n );
 
     p   = (unsigned char *)((unsigned int)base & ~(unsigned int)0x3);
 

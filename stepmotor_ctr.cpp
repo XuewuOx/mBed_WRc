@@ -154,7 +154,7 @@ void moveMotor2Dest(int motorID, int dest) {
             dispMotorStatus();
             return;
         }
-
+        DEBUGF("motorID=%d, ok\r\n",k);
 #if uSWU_POSITION == uSW_OpticRef
         if (uSW==1 && dest>nNow[motorID])
 #else
@@ -198,7 +198,7 @@ void clkMotorLED() {
 	if (uSW==1 && *pDIR[0]==0)
 #endif
 	{ // LED motor has been at the end of the rail. No further movement
-    	printf("LED motor[1] has been at the end of the rail. \r\n");
+    	DEBUGF("- LED motor[1] has been at the end of the rail. \r\n");
 
         tickerMotor[0].detach();
         *pENB[0]=0;
@@ -216,7 +216,7 @@ void clkMotorLED() {
         *pENB[0]=0;
         led4=0;
         led1=0;
-        DEBUGF("motorLED arrives at %d \r\n", nNow[MOTORIDLED]);
+        DEBUGF("- motorLED arrives at %d \r\n", nNow[MOTORIDLED]);
         // dispMotorStatus();
         statusLEDMotor=2; //printf("clkMotorLED() set 2\n");
         return;
@@ -224,6 +224,7 @@ void clkMotorLED() {
 
     *pCLK[0]=!(*pCLK[0]);
      led4=!led4;
+     DEBUGF("+");
     if (*pCLK[0]==0) { // drop edge
         if (*pDIR[0]==0)
             nNow[MOTORIDLED]--;

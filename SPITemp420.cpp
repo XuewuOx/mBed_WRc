@@ -145,8 +145,8 @@ float readTemp()
 	cstemp=0;
 	cmdByte=0x50;// 01010000
     spitemp420.write(cmdByte);
-    tempHi=0x5A5A;
-    tempLo=0xA5A5;
+    tempHi=0x5A;
+    tempLo=0xA5;
     tempHi=spitemp420.write(0x00);
     tempLo=spitemp420.write(0x00);
     cstemp = 1;
