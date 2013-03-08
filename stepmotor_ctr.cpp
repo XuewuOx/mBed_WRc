@@ -16,8 +16,8 @@
 #define uSW_OpticRef 1
 #define uSW_WaterMes 0
 
-#define uSW_POSITION  0
-// uSWU_POSITION   1 when the uSW is at the optic reference end
+#define uSW_POSITION  1
+// uSW_POSITION   1 when the uSW is at the optic reference end
 //                 0 when the uSW at the water measurement end
 
 /* -------------
@@ -155,7 +155,7 @@ void moveMotor2Dest(int motorID, int dest) {
             return;
         }
         DEBUGF("motorID=%d, ok\r\n",k);
-#if uSWU_POSITION == uSW_OpticRef
+#if uSW_POSITION == uSW_OpticRef
         if (uSW==1 && dest>nNow[motorID])
 #else
         if (uSW==1 && dest<nNow[motorID])
@@ -192,7 +192,7 @@ void moveMotor2Dest(int motorID, int dest) {
 // invoked two times at one step motor movement
 void clkMotorLED() {
 
-#if uSWU_POSITION == uSW_OpticRef
+#if uSW_POSITION == uSW_OpticRef
 	if (uSW==1 && *pDIR[0]==1)
 #else
 	if (uSW==1 && *pDIR[0]==0)
