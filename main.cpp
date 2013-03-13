@@ -294,7 +294,7 @@ void swingLED(int posA, int posB, int nSam)
 	posA=posA-1;
     // move from nNow to posA at a fast speed
 	ms0=motorSpd[MOTORIDLED];
-    motorSpd[MOTORIDLED]=200; // 5 steps per second
+    // motorSpd[MOTORIDLED]=200; // 5 steps per second
     moveMotor2Dest(MOTORIDLED, posA);
 
     // set wait time for motor achieve posA
