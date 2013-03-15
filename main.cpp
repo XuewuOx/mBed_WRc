@@ -52,6 +52,8 @@ AnalogOut APDBiasVoltage(p18);
 extern int endofcmd; // -1 for normal char, 0 for 0x0D, 1 for 0x0A
                  // endofcmd =1 (TRUE) only when received 0D 0A ("\r\n")
 extern MODSERIAL pc;
+extern MODSERIAL irdrive;
+extern MODSERIAL uvdrive;
 
 extern unsigned int Fs;
 
@@ -84,7 +86,7 @@ int main()
 
 	Initialize_main();
 wait(1);
-	pc.printf("% main loop starts\r\n");
+	pc.printf("% main loop starts. statusLEDMotor=%d\r\n", statusLEDMotor);
       // int account=0;
     while (1) {
 
@@ -102,12 +104,13 @@ wait(1);
                         // set 0 for one-shot sampling, see heartbeat()in RTCfunc.cpp
         }
 
+        // process the motor event
         if (statusLEDMotor==2||statusLEDMotor==3)
         { // statusLEDMotor is set to 2 (arrives at the dest)
         	// and to 3 (arrives at the switch) in clkMotorLED()
+        	// pc.printf("Moving motor done.(statusLEDMotor==2 or 3)\r\n");
             dispMotorStatus();
-        	statusLEDMotor=0;
-        	statusLEDMotor=0;
+        	statusLEDMotor=0; // motor is ready, we have processed the motor evernt
 
         }
 
@@ -165,26 +168,39 @@ int Initialize_main()
     printf("%% LED motor power on test\r\n");
     moveMotor2Dest(MOTORIDLED, 100);
 	wdt.feed();
-    while(nNow[MOTORIDLED]!=100)
+	while(!(nNow[MOTORIDLED]==100 && (statusLEDMotor==2)))
     {  wait(0.001);
  		if (statusLEDMotor==3) // stops when arrives at uSwitch, although not arrives at the dest
 	   {printf("Motor stops when uSwitch is triggered.\r\n");
+	    statusLEDMotor=0; // set 0, motor is ready (we have processed the motor's uSwitch event)
  		break;
 	   }
     }
-    wait(0.2);
+
+    statusLEDMotor=0; // set 0, motor is ready (we have processed the motor's uSwitch/arrive event)
+
+    wait(0.2); // wait for
     moveMotor2Dest(MOTORIDLED, 0);
-    while(nNow[MOTORIDLED]!=0 )
+	while(!(nNow[MOTORIDLED]==0 && (statusLEDMotor==2)))
     {  	wait(0.001);
      	if (statusLEDMotor==3) // stops when arrives at uSwitch, although not arrives at the dest
     	   {printf("Motor stops when uSwitch is triggered.\r\n");
+
      		break;
     	   }
     }
+    statusLEDMotor=0; // set 0, motor is ready (we have processed the motor's uSwitch/arrive event)
+
 	wdt.feed();
 	wait(0.2);
 
 	dispMotorStatus();
+	// Switch OFF light when mBed reset and boots up
+	uvdrive.puts("uvt\n");
+	pc.puts("% OK uvt (UV OFF)\r\n");
+	irdrive.puts("irt\n");
+	pc.puts("% OK irt (IR OFF)\r\n");
+
 
 	Fs=500;
 	return EXIT_SUCCESS;
@@ -289,37 +305,43 @@ void swingLED(int posA, int posB, int nSam)
 *		}
 */
 
-	// move motor one step before the starting position
-	// Because, at each step, we will move motor one step first followed by collecting data.
-	posA=posA-1;
-    // move from nNow to posA at a fast speed
-	ms0=motorSpd[MOTORIDLED];
-    // motorSpd[MOTORIDLED]=200; // 5 steps per second
-    moveMotor2Dest(MOTORIDLED, posA);
+	// move motor to the starting position
+	// At each step, we will wait for signal settled down, then start collecting data
+	// and folloed by move motor one step towards posB
+	if (nNow[MOTORIDLED]!=posA)
+	{// move from nNow to posA at the pre-defined speed
+		// DEBUGF("  moving motor to posA=%d... ", posA);
+		ms0=motorSpd[MOTORIDLED];
+		// motorSpd[MOTORIDLED]=200; // 5 steps per second
+		moveMotor2Dest(MOTORIDLED, posA);
 
-    // set wait time for motor achieve posA
-    nSteps=abs(posA-nNow[MOTORIDLED]);
-    kk=(float) nSteps/motorSpd[MOTORIDLED]+10;  // steps per second
-    if (kk>10.0)
-    	wdt.kick(kk);
-    // DEBUGF("wdt=%f s",kk);
-    while(nNow[MOTORIDLED]!=posA)
-    { //  printf(" %d ", nNow[MOTORIDLED]);
-         wait(0.001);
-    }
-    // wait(1);
-    // restor wait time and motor speed
-    wdt.kick(10.0);
-    motorSpd[MOTORIDLED]=ms0; // restore the original value of motor speed
-    // DEBUGF("\n, posA OK!\n");
+		// set wait time for motor achieve posA
+		nSteps=abs(posA-nNow[MOTORIDLED]);
+		kk=(float) nSteps/motorSpd[MOTORIDLED]+10;  // steps per second
+		if (kk>10.0)
+			wdt.kick(kk);
+		// DEBUGF("wdt=%f s",kk);
+		while(nNow[MOTORIDLED]!=posA)
+		{ //  printf(" %d ", nNow[MOTORIDLED]);
+			 wait(0.001);
+		}
+		// wait(1);
+		// restor wait time and motor speed
+		wdt.kick(10.0);
+		motorSpd[MOTORIDLED]=ms0; // restore the original value of motor speed
+		// DEBUGF(" done.\r\n");
+	}
+
+	// we have been starting position posA now
     dispMotorStatus();
 
     dirMotor=posB-posA;
-    nSteps=abs(dirMotor);
+    nSteps=abs(dirMotor)+1;
+    destTemp=posA; // initialise destTemp
 
     ADCstatus=0;
     // prefix sequence of data packet
-    pc.printf("%%SWN posA=%d, posB=%d, nSteps=%d, nSam=%d, Fs=%d\r\n",posA+1, posB, nSteps, nSam, Fs);
+    pc.printf("%%SWN posA=%d, posB=%d, nSteps=%d, nSam=%d, Fs=%d\r\n",posA, posB, nSteps, nSam, Fs);
     /*
     // DEBUG codes for UART communicaiton with host PC/Beagle
     for (int i=0;i<=nSteps;i++)
@@ -340,19 +362,29 @@ void swingLED(int posA, int posB, int nSam)
     return;
     // end of DEBUG codes for UART comm
 */
-    // Start moving motor one step followed by a2d conversion
-	// startA2D(Fs,nSam);
-	// do{  wait(0.001);	} while(ADCstatus!=2);
+    // Start a2d conversion followed by moving motor one step towards posB
     wait(0.01);
     pc.printf("%% header format \r\n%% motorStep IR1 UV1 IR2 UV2 IR3 UV3 ... \r\n");
     wait(0.01);
-    pc.printf("%% DATAIRUVBEGIN nRow=%d nCol=%d", nSteps, nSam+1); // one more column for motor step
+    pc.printf("%% DATAIRUVBEGIN nRow=%d nCol=%d (expected)", nSteps, nSam+1); // one more column for motor step
     wait(0.01);
     kk=(float) nSam/Fs+2;  // setup new dogfeeding interval
     if (kk>10.0) wdt.kick(kk);
 	for (i=0; i<nSteps; i++)
     {
+
+		wait(delayAfterMovingMotor); // after moving the motor, wait for the signal being stable,
+		    	           // due to the transition response of electronic circuits
+    	// DEBUGF(" %d-th moveMotor2Dest, OK!\n", i+1);
+    	pc.printf("\r\n%04d ", destTemp);
+    	// send UV IR data up to host PC via USB-RS232
+		startA2D(Fs,nSam);
+		    	do{  wait(0.0005);	} while(ADCstatus!=2);
+
+
     	if (dirMotor==0)
+    		{break;}
+    	if (nNow[MOTORIDLED]==posB)
     		{break;}
     	if (dirMotor>0)
     		{   moveMotornSteps(MOTORIDLED,1);
@@ -362,19 +394,19 @@ void swingLED(int posA, int posB, int nSam)
     		{   moveMotornSteps(MOTORIDLED,-1);
     			destTemp=nNow[MOTORIDLED]-1;
     		}
-		while(nNow[MOTORIDLED]!=destTemp)
+		while(!(nNow[MOTORIDLED]==destTemp && statusLEDMotor==2))
     	{ //  printf(" %d ", nNow[MOTORIDLED]);
     		wait(0.0005);
+    		if (statusLEDMotor==3) // stops when arrives at uSwitch, although not arrives at the dest
+    		{  break;
+    	      }
     	}
-    	wait(delayAfterMovingMotor); // after moving the motor, wait for the signal being stable,
-    	           // due to the transition response of electronic circuits
-    	// DEBUGF(" %d-th moveMotor2Dest, OK!\n", i+1);
-    	pc.printf("\r\n%04d ", destTemp);
-    	startA2D(Fs,nSam);
-    	do{  wait(0.0005);	} while(ADCstatus!=2);
 
+		if (statusLEDMotor==3)
+		{  break;
+		}
+		statusLEDMotor=0; // motor is ready, clear motor event flag
 
-    	// send UV IR data up to host PC via USB-RS232
     	/*
     	pc.printf("\ndir%04d=[",destTemp);
     	for (int j=0;j<nSam;j++)
@@ -392,9 +424,12 @@ void swingLED(int posA, int posB, int nSam)
     }
 	wdt.kick(10.0); // restore default value of dog feeding interval
     // terminate sequence of data packet
-    pc.printf("\r\n%% nROW=%d nCol=%d DATAIRUVEND\r\n",i,nSam+1);
+    pc.printf("\r\n%% DATAIRUVEND  nROW=%d nCol=%d (actual)\r\n",i+1,nSam+1);
+    if (statusLEDMotor==3)
+    	pc.printf("%% Motor arrives at uSwitch. Stop moving motor and cancel a2d conversion.\r\n");
     // pc.printf("true A2D values\r\n");
     dispMotorStatus();
+    statusLEDMotor=0;
     return;
 
 }
