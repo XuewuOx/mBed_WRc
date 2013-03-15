@@ -147,11 +147,13 @@ void moveMotor2Dest(int motorID, int dest) {
     { // LED or APD motor
         if (*pENB[k]==1) { // motorLEd is moving, have to wait until it stops
             printf("motor[%d] is moving. move cmd is ignored\n", k+1);
+            statusLEDMotor=1;
             return;
         }
         if (dest==nNow[motorID]) {
         	DEBUGF("motor[%d] arrives at %d \n", motorID, nNow[motorID]);
-            dispMotorStatus();
+            statusLEDMotor=2;
+            // dispMotorStatus();
             return;
         }
         DEBUGF("motorID=%d, ok\r\n",k);
@@ -163,7 +165,7 @@ void moveMotor2Dest(int motorID, int dest) {
 	    { // LED motor has been at the end of the rail. No further movement
         	DEBUGF("LED motor[1] has been at the end of the rail. Stop");
         	statusLEDMotor=3;
-        	dispMotorStatus();
+        	// dispMotorStatus();
         	return;
         }
         *pENB[k]=0; // set enbLED=0 to ensure no movement while setting clk
@@ -180,9 +182,11 @@ void moveMotor2Dest(int motorID, int dest) {
            tickerMotor[k].attach(&clkMotorLED,0.5/motorSpd[motorID]);
         else
            tickerMotor[k].attach(&clkMotorAPD,0.5/motorSpd[motorID]);
+        statusLEDMotor=1;
 
     } else {
         printf("%d  is an unrecognised MotorID. \n", motorID);
+        statusLEDMotor=0;
     }
     // DEBUGF("moveMotor2Dest() return\n");
 
@@ -231,6 +235,7 @@ void clkMotorLED() {
         else
             nNow[MOTORIDLED]++;
     }
+    statusLEDMotor=1; //motor is moving
 
 }
 
