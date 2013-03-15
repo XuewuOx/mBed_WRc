@@ -362,6 +362,13 @@ void swingLED(int posA, int posB, int nSam)
     return;
     // end of DEBUG codes for UART comm
 */
+
+    /*
+     * The output data string of swn command has been changed into
+     *        % DATAIRUVBEGIN nRow=%d nCol=%d (expected)
+     *        % DATAIRUVEND  nROW=%d nCol=%d (actual)
+     * The Beagle programme should use the nRow values at %%DATAIRUVEDN, not at the  DATARUNBEGIN
+     */
     // Start a2d conversion followed by moving motor one step towards posB
     wait(0.01);
     pc.printf("%% header format \r\n%% motorStep IR1 UV1 IR2 UV2 IR3 UV3 ... \r\n");
